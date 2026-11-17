@@ -1,0 +1,2984 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KINETIA — Industrial AI &amp; Automation Academy · Prototipo TFG UB</title>
+
+  <!-- Google Fonts: Space Grotesk, Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            porcelain: '#F8FAFC',
+            ink: '#0F172A',
+            muted: '#475569',
+            borderLight: '#E2E8F0',
+            cobalt: '#1D4ED8',
+            cobaltHover: '#1E40AF',
+            cobaltTint: '#EFF6FF',
+            tealMetric: '#0D9488',
+            tealTint: '#F0FDFA',
+            amberAlert: '#D97706',
+          },
+          boxShadow: {
+            'card': '0 1px 3px rgba(15, 23, 42, 0.04), 0 8px 24px -6px rgba(15, 23, 42, 0.05)',
+            'card-hover': '0 4px 12px rgba(15, 23, 42, 0.06), 0 18px 36px -8px rgba(29, 78, 216, 0.10)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Three.js r128 para Simulador Gemelo Digital 3D -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    /* Estilizado limpio y arquitectónico para controles deslizantes */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: #E2E8F0;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      margin-top: -6px;
+      height: 18px;
+      width: 18px;
+      border-radius: 50%;
+      background: #1D4ED8;
+      border: 2.5px solid #FFFFFF;
+      box-shadow: 0 2px 6px rgba(29, 78, 216, 0.4);
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.14);
+      background: #1E40AF;
+    }
+
+    /* Transición suave al cambiar de interfaz SPA */
+    .spa-view {
+      animation: viewFadeIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes viewFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Scrollbar minimalista */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+  </style>
+</head>
+<body class="bg-porcelain text-ink font-sans antialiased selection:bg-cobalt/15 selection:text-cobalt min-h-screen flex flex-col">
+
+  <!-- ===================================================================== -->
+  <!-- BARRA DE NAVEGACIÓN SUPERIOR FIJA Y MINIMALISTA (SPA ARCHITECTURE)    -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-borderLight">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 lg:h-[68px] gap-3">
+        
+        <!-- 1. Identidad de Marca KINETIA + Isotipo Geométrico SVG -->
+        <div class="flex items-center gap-3 shrink-0">
+          <button onclick="navigateTo('inicio')" class="flex items-center gap-2.5 text-left group focus:outline-none cursor-pointer">
+            <!-- Isotipo KINETIA (Precisión Cinemática + Nodo IA) -->
+            <div class="w-9 h-9 rounded-xl bg-ink flex items-center justify-center shadow-sm group-hover:bg-cobalt transition-colors">
+              <svg class="w-5 h-5" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="4" width="3.5" height="20" rx="1.75" fill="#FFFFFF" />
+                <path d="M9.5 14L19.5 5.5" stroke="#60A5FA" stroke-width="3.2" stroke-linecap="round" />
+                <path d="M11.5 13L21 22.5" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" />
+                <circle cx="20.5" cy="5.5" r="2.8" fill="#14B8A6" />
+                <circle cx="9.5" cy="14" r="2.2" fill="#3B82F6" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-display font-bold text-lg tracking-tight text-ink leading-none">KINETIA</span>
+                <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                  PROTOTIPO TFG · UB
+                </span>
+              </div>
+              <p class="text-[11px] text-muted leading-none mt-1 hidden md:block">Industrial AI &amp; Automation Academy</p>
+            </div>
+          </button>
+        </div>
+
+        <!-- 2. Pestañas de Navegación entre las 5 Interfaces Principales -->
+        <nav class="hidden xl:flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/80" aria-label="Navegación principal">
+          <button onclick="navigateTo('inicio')" id="navTab-inicio" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+            Inicio
+          </button>
+          <button onclick="navigateTo('soluciones')" id="navTab-soluciones" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+            Soluciones por Perfil
+          </button>
+          <button onclick="navigateTo('catalogo')" id="navTab-catalogo" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+            Catálogo IA &amp; 4.0
+          </button>
+          <button onclick="navigateTo('simuladores')" id="navTab-simuladores" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-tealMetric mr-1.5 align-middle"></span>Simuladores
+          </button>
+          <button onclick="navigateTo('calculadora')" id="navTab-calculadora" class="nav-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+            Calculadora ROI
+          </button>
+        </nav>
+
+        <!-- 3. Selector Rápido de Perfil Activo + CTA Primario -->
+        <div class="flex items-center gap-2.5">
+          <!-- Selector Rápido de Perfil -->
+          <div class="hidden md:flex items-center bg-porcelain border border-borderLight rounded-xl px-2.5 py-1.5 gap-1.5">
+            <span class="text-[10px] font-mono uppercase text-slate-400">Perfil:</span>
+            <select id="globalProfileSelect" onchange="setSegment(this.value)" aria-label="Seleccionar perfil activo" class="bg-transparent text-xs font-bold text-ink focus:outline-none cursor-pointer pr-1">
+              <option value="b2b">Empresa B2B</option>
+              <option value="b2c">Profesional B2C</option>
+              <option value="edu">FP / Universidad</option>
+            </select>
+          </div>
+
+          <!-- Botón Primario Solicitar Demo -->
+          <button onclick="openContextualModal()" class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-cobalt hover:bg-cobaltHover shadow-sm transition-all cursor-pointer">
+            <span>Solicitar Demo</span>
+          </button>
+
+          <!-- Botón Menú Móvil / Tablet -->
+          <button id="mobileNavBtn" onclick="toggleMobileMenu()" aria-label="Abrir navegación" class="xl:hidden p-2 rounded-xl border border-borderLight bg-white text-ink hover:bg-slate-50 cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel Desplegable Móvil / Tablet -->
+    <div id="mobileMenuPanel" class="hidden xl:hidden bg-white border-t border-borderLight px-4 py-4 space-y-3 shadow-lg">
+      <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+        <span class="text-xs font-mono text-muted">PERFIL ACTIVO:</span>
+        <div class="flex gap-1.5">
+          <button onclick="setSegment('b2b')" id="mobProf-b2b" class="px-2.5 py-1 rounded-lg text-xs font-bold border transition-all">B2B</button>
+          <button onclick="setSegment('b2c')" id="mobProf-b2c" class="px-2.5 py-1 rounded-lg text-xs font-bold border transition-all">B2C</button>
+          <button onclick="setSegment('edu')" id="mobProf-edu" class="px-2.5 py-1 rounded-lg text-xs font-bold border transition-all">FP/Uni</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <button onclick="navigateTo('inicio'); toggleMobileMenu();" class="p-2.5 rounded-xl text-left text-xs font-bold bg-slate-50 hover:bg-cobaltTint text-ink">1. Inicio</button>
+        <button onclick="navigateTo('soluciones'); toggleMobileMenu();" class="p-2.5 rounded-xl text-left text-xs font-bold bg-slate-50 hover:bg-cobaltTint text-ink">2. Soluciones Perfil</button>
+        <button onclick="navigateTo('catalogo'); toggleMobileMenu();" class="p-2.5 rounded-xl text-left text-xs font-bold bg-slate-50 hover:bg-cobaltTint text-ink">3. Catálogo IA &amp; 4.0</button>
+        <button onclick="navigateTo('simuladores'); toggleMobileMenu();" class="p-2.5 rounded-xl text-left text-xs font-bold bg-slate-50 hover:bg-cobaltTint text-ink">4. Simuladores</button>
+        <button onclick="navigateTo('calculadora'); toggleMobileMenu();" class="p-2.5 rounded-xl text-left text-xs font-bold bg-slate-50 hover:bg-cobaltTint text-ink">5. Calculadora ROI</button>
+        <button onclick="toggleMobileMenu(); openContextualModal();" class="p-2.5 rounded-xl text-center text-xs font-bold bg-cobalt text-white">Solicitar Demo</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- CONTENEDOR PRINCIPAL DE LAS 5 INTERFACES INDEPENDIENTES               -->
+  <!-- ===================================================================== -->
+  <main class="flex-1 flex flex-col">
+
+    <!-- =================================================================== -->
+    <!-- INTERFAZ 1: INICIO (COMPACTA, ARCHITECTURAL & 3 TARJETAS CON IMAGEN)-->
+    <!-- =================================================================== -->
+    <section id="view-inicio" class="spa-view max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-11 flex-1 flex flex-col justify-between gap-8">
+      
+      <!-- Hero Editorial Limpio -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-end">
+        <div class="lg:col-span-8 space-y-3.5">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cobaltTint border border-blue-200 text-cobalt text-xs font-mono font-semibold">
+            <span class="w-1.5 h-1.5 rounded-full bg-cobalt"></span>
+            <span>TRANSFORMACIÓN INDUSTRIAL · INTELIGENCIA ARTIFICIAL + AUTOMATIZACIÓN</span>
+          </div>
+          <h1 class="font-display text-3xl sm:text-4xl lg:text-[42px] font-bold tracking-tight text-ink leading-[1.12]">
+            Capacitación técnica de precisión para liderar la <span class="text-cobalt">industria impulsada por IA</span>.
+          </h1>
+          <p class="text-sm sm:text-base text-muted max-w-2xl leading-relaxed">
+            Entrenamiento práctico sobre gemelos digitales 3D multimarca en mantenimiento predictivo, visión artificial y robótica colaborativa. Diseñado para tres perfiles clave del ecosistema industrial.
+          </p>
+        </div>
+
+        <!-- 3 Indicadores Clave de Impacto -->
+        <div class="lg:col-span-4 grid grid-cols-3 gap-2.5 bg-white p-4 rounded-2xl border border-borderLight shadow-card">
+          <div class="text-center sm:text-left">
+            <div class="font-mono text-lg sm:text-xl font-bold text-tealMetric">+34%</div>
+            <div class="text-[11px] text-muted leading-tight mt-0.5">OEE en planta</div>
+          </div>
+          <div class="text-center sm:text-left border-x border-slate-100 px-2">
+            <div class="font-mono text-lg sm:text-xl font-bold text-cobalt">100%</div>
+            <div class="text-[11px] text-muted leading-tight mt-0.5">Bonificable FUNDAE</div>
+          </div>
+          <div class="text-center sm:text-left">
+            <div class="font-mono text-lg sm:text-xl font-bold text-ink">6 OEM</div>
+            <div class="text-[11px] text-muted leading-tight mt-0.5">Ecosistemas 3D</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloque Protagonista: 3 Tarjetas Visuales de Segmento con Imagen y CTA Diferenciado -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- TARJETA 1: EMPRESAS INDUSTRIALES (B2B) -->
+        <article class="group bg-white rounded-2xl border border-borderLight hover:border-cobalt/50 shadow-card hover:shadow-card-hover overflow-hidden flex flex-col justify-between transition-all">
+          <div>
+            <!-- Imagen Industrial B2B con Fallback SVG Ilustrado -->
+            <div class="relative h-44 sm:h-48 bg-slate-100 overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=900&q=80"
+                alt="Célula robotizada y automatización industrial en planta B2B"
+                onerror="handleImageFallback(this, 'b2b')"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-ink/65 via-ink/15 to-transparent"></div>
+              <div class="absolute top-3 left-3">
+                <span class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider bg-white/95 text-cobalt shadow-sm">
+                  TRANSFORMACIÓN DE PLANTILLAS
+                </span>
+              </div>
+              <div class="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-white">
+                <span class="text-xs font-mono font-semibold opacity-90">SEGMENTO 01 · B2B</span>
+                <span class="text-[11px] font-mono bg-tealMetric/90 px-2 py-0.5 rounded text-white font-bold">FUNDAE + UE</span>
+              </div>
+            </div>
+
+            <!-- Contenido Tarjeta B2B -->
+            <div class="p-5 sm:p-6">
+              <h2 class="font-display text-lg sm:text-xl font-bold text-ink group-hover:text-cobalt transition-colors">
+                Empresas Industriales (B2B)
+              </h2>
+              <p class="text-xs sm:text-sm text-muted mt-2 leading-relaxed">
+                Recualifica a tus equipos de mantenimiento e ingeniería en mantenimiento predictivo con IA, visión artificial y robótica sin detener la línea. Gestión integral bonificable FUNDAE y Fondos UE.
+              </p>
+            </div>
+          </div>
+
+          <div class="px-5 sm:px-6 pb-5 sm:pb-6 pt-1">
+            <button onclick="goToSegmentSolution('b2b')" class="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-cobalt hover:bg-cobaltHover transition-colors flex items-center justify-between cursor-pointer">
+              <span>Explorar Solución Empresas</span>
+              <span>→</span>
+            </button>
+          </div>
+        </article>
+
+        <!-- TARJETA 2: PROFESIONALES Y TÉCNICOS (B2C) -->
+        <article class="group bg-white rounded-2xl border border-borderLight hover:border-tealMetric/60 shadow-card hover:shadow-card-hover overflow-hidden flex flex-col justify-between transition-all">
+          <div>
+            <!-- Imagen Técnico / Ingeniero B2C con Fallback SVG Ilustrado -->
+            <div class="relative h-44 sm:h-48 bg-slate-100 overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=900&q=80"
+                alt="Ingeniero técnico trabajando con sistemas digitales e IA industrial"
+                onerror="handleImageFallback(this, 'b2c')"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-ink/65 via-ink/15 to-transparent"></div>
+              <div class="absolute top-3 left-3">
+                <span class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider bg-white/95 text-tealMetric shadow-sm">
+                  UPSKILLING &amp; RESKILLING
+                </span>
+              </div>
+              <div class="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-white">
+                <span class="text-xs font-mono font-semibold opacity-90">SEGMENTO 02 · B2C</span>
+                <span class="text-[11px] font-mono bg-ink/85 px-2 py-0.5 rounded text-white font-bold">CLOUD 24/7</span>
+              </div>
+            </div>
+
+            <!-- Contenido Tarjeta B2C -->
+            <div class="p-5 sm:p-6">
+              <h2 class="font-display text-lg sm:text-xl font-bold text-ink group-hover:text-tealMetric transition-colors">
+                Profesionales y Técnicos (B2C)
+              </h2>
+              <p class="text-xs sm:text-sm text-muted mt-2 leading-relaxed">
+                Especialízate de forma práctica en visión artificial, PLCs inteligentes y robótica colaborativa sobre simuladores 3D para impulsar tu empleabilidad y proyección salarial en la industria 4.0.
+              </p>
+            </div>
+          </div>
+
+          <div class="px-5 sm:px-6 pb-5 sm:pb-6 pt-1">
+            <button onclick="goToSegmentSolution('b2c')" class="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-tealMetric hover:bg-teal-700 transition-colors flex items-center justify-between cursor-pointer">
+              <span>Impulsar mi Perfil Técnico</span>
+              <span>→</span>
+            </button>
+          </div>
+        </article>
+
+        <!-- TARJETA 3: CENTROS DE FP Y UNIVERSIDADES (ACADÉMICO) -->
+        <article class="group bg-white rounded-2xl border border-borderLight hover:border-ink/40 shadow-card hover:shadow-card-hover overflow-hidden flex flex-col justify-between transition-all">
+          <div>
+            <!-- Imagen Laboratorio Tecnológico FP / Uni con Fallback SVG Ilustrado -->
+            <div class="relative h-44 sm:h-48 bg-slate-100 overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=900&q=80"
+                alt="Laboratorio de ingeniería y robótica educativa"
+                onerror="handleImageFallback(this, 'edu')"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-ink/65 via-ink/15 to-transparent"></div>
+              <div class="absolute top-3 left-3">
+                <span class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider bg-white/95 text-ink shadow-sm">
+                  AULAS VIRTUALES 3D
+                </span>
+              </div>
+              <div class="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between text-white">
+                <span class="text-xs font-mono font-semibold opacity-90">SEGMENTO 03 · ACADÉMICO</span>
+                <span class="text-[11px] font-mono bg-cobalt/90 px-2 py-0.5 rounded text-white font-bold">-88% CAPEX</span>
+              </div>
+            </div>
+
+            <!-- Contenido Tarjeta Académica -->
+            <div class="p-5 sm:p-6">
+              <h2 class="font-display text-lg sm:text-xl font-bold text-ink group-hover:text-cobalt transition-colors">
+                Centros de FP y Universidades
+              </h2>
+              <p class="text-xs sm:text-sm text-muted mt-2 leading-relaxed">
+                Despliega gemelos digitales 3D multimarca en el navegador para todos tus alumnos sin inversiones millonarias en hardware físico ni riesgo de colisiones en taller.
+              </p>
+            </div>
+          </div>
+
+          <div class="px-5 sm:px-6 pb-5 sm:pb-6 pt-1">
+            <button onclick="goToSegmentSolution('edu')" class="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-ink hover:bg-slate-800 transition-colors flex items-center justify-between cursor-pointer">
+              <span>Equipar mi Centro Educativo</span>
+              <span>→</span>
+            </button>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- Barra Inferior de Accesos Rápidos a Herramientas -->
+      <div class="bg-white border border-borderLight rounded-2xl p-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-card">
+        <div class="flex items-center gap-3 text-xs sm:text-sm text-muted">
+          <span class="w-2.5 h-2.5 rounded-full bg-tealMetric shrink-0"></span>
+          <span>¿Quieres experimentar directamente con la célula robotizada con Visión IA?</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
+          <button onclick="navigateTo('catalogo')" class="px-4 py-2 rounded-xl text-xs font-bold text-ink bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer">
+            Explorar Catálogo (8 cursos)
+          </button>
+          <button onclick="navigateTo('simulador')" class="px-4 py-2 rounded-xl text-xs font-bold text-cobalt bg-cobaltTint hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer">
+            Abrir Simulador 3D →
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- INTERFAZ 2: SOLUCIONES POR PERFIL (VISTA DEDICADA POR SEGMENTO)     -->
+    <!-- =================================================================== -->
+    <section id="view-soluciones" class="spa-view hidden max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10 space-y-8">
+      
+      <!-- Selector de Pestañas Grandes por Perfil -->
+      <div class="bg-white p-1.5 rounded-2xl border border-borderLight shadow-card grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+        <button onclick="setSegment('b2b')" id="solTab-b2b" class="sol-tab py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2">
+          <span>1. Empresas Industriales (B2B)</span>
+        </button>
+        <button onclick="setSegment('b2c')" id="solTab-b2c" class="sol-tab py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2">
+          <span>2. Profesionales y Técnicos (B2C)</span>
+        </button>
+        <button onclick="setSegment('edu')" id="solTab-edu" class="sol-tab py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2">
+          <span>3. Centros de FP y Universidades</span>
+        </button>
+      </div>
+
+      <!-- Split Hero Dinámico del Perfil Seleccionado -->
+      <div class="bg-white rounded-2xl border border-borderLight shadow-card overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+        <!-- Columna Izquierda: Propuesta de Valor, Dolores Resueltos, Métricas y CTA -->
+        <div class="lg:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
+          <div class="space-y-4">
+            <span id="solBadge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold bg-cobaltTint text-cobalt border border-blue-200">
+              SOLUCIÓN CORPORATIVA B2B · FUNDAE + UE
+            </span>
+            <h2 id="solHeadline" class="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-ink leading-tight">
+              Acelera la adopción de IA y Automatización en tu plantilla sin detener la producción.
+            </h2>
+            <p id="solDesc" class="text-sm sm:text-base text-muted leading-relaxed">
+              Resolvemos la brecha de talento técnico en mantenimiento predictivo, visión artificial y robótica colaborativa con entrenamiento práctico sobre gemelos digitales 3D multimarca.
+            </p>
+
+            <!-- Puntos Clave de Dolor Resueltos -->
+            <div id="solPainPoints" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              <!-- Renderizado dinámico JS -->
+            </div>
+          </div>
+
+          <!-- Métricas de Impacto + Botones CTA -->
+          <div class="pt-5 border-t border-slate-100 space-y-5">
+            <div id="solMetrics" class="grid grid-cols-3 gap-4">
+              <!-- Renderizado dinámico JS -->
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+              <button id="solPrimaryCta" onclick="handleSolPrimaryCta()" class="px-6 py-3.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-cobalt hover:bg-cobaltHover shadow-sm transition-all cursor-pointer">
+                Calcular Crédito FUNDAE y ROI →
+              </button>
+              <button onclick="navigateTo('simulador')" class="px-5 py-3.5 rounded-xl text-xs sm:text-sm font-bold text-ink bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer">
+                Probar Simulador 3D
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna Derecha: Imagen de Alta Calidad + Overlay Técnico -->
+        <div class="lg:col-span-5 relative min-h-[260px] lg:min-h-full bg-slate-100">
+          <img
+            id="solHeroImage"
+            src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1000&q=80"
+            alt="Entorno industrial KINETIA"
+            onerror="handleImageFallback(this, activeSegment)"
+            class="w-full h-full object-cover"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-ink/75 via-ink/20 to-transparent"></div>
+          <div class="absolute bottom-5 left-5 right-5 bg-white/95 backdrop-blur-md p-4 rounded-xl border border-slate-200 shadow-lg">
+            <div class="flex items-center justify-between text-[11px] font-mono text-muted mb-1">
+              <span id="solOverlayTag">ARQUITECTURA KINETIA B2B</span>
+              <span class="text-tealMetric font-bold">● CLOUD 3D ACTIVO</span>
+            </div>
+            <p id="solOverlayCaption" class="text-xs font-bold text-ink">
+              Entrenamiento en Siemens, ABB, Fanuc, Festo, UR y Schneider sin riesgo sobre activos reales.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid de 3 Pilares Metodológicos del Segmento -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-display text-lg sm:text-xl font-bold text-ink">Metodología y Propuesta de Valor Específica</h3>
+          <span class="text-xs font-mono text-muted hidden sm:inline">3 PILARES DE IMPLEMENTACIÓN</span>
+        </div>
+        <div id="solPillarsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <!-- Renderizado dinámico JS -->
+        </div>
+      </div>
+
+      <!-- Cursos Recomendados para este Perfil -->
+      <div class="bg-white rounded-2xl border border-borderLight p-6 shadow-card">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+          <div>
+            <span class="text-[11px] font-mono uppercase text-cobalt font-bold">ITINERARIOS DESTACADOS</span>
+            <h3 id="solRecTitle" class="font-display text-lg font-bold text-ink">Programas Recomendados para Empresas Industriales</h3>
+          </div>
+          <button onclick="navigateTo('catalogo')" class="text-xs font-bold text-cobalt hover:underline cursor-pointer self-start sm:self-auto">
+            Ver catálogo completo (8 cursos) →
+          </button>
+        </div>
+        <div id="solRecCoursesGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Renderizado dinámico JS -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- INTERFAZ 3: CATÁLOGO TÉCNICO IA & AUTOMATIZACIÓN (MULTIMARCA)       -->
+    <!-- =================================================================== -->
+    <section id="view-catalogo" class="spa-view hidden max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10 space-y-6">
+      
+      <!-- Encabezado Catálogo -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <span class="text-xs font-mono font-bold uppercase text-cobalt">CATÁLOGO TÉCNICO MULTIMARCA · IA + AUTOMATIZACIÓN</span>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-ink mt-1">
+            Programas de Especialización Industrial 4.0
+          </h2>
+        </div>
+        <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-borderLight text-xs font-mono text-muted shadow-sm self-start md:self-auto">
+          <span>Mostrando</span>
+          <strong id="catCountBadge" class="text-cobalt font-bold">8</strong>
+          <span>de 8 programas</span>
+        </div>
+      </div>
+
+      <!-- Barra Superior de Búsqueda y Filtros -->
+      <div class="bg-white rounded-2xl border border-borderLight p-5 shadow-card space-y-4">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <!-- Buscador en tiempo real -->
+          <div class="lg:col-span-5">
+            <label for="catSearchInput" class="block text-[11px] font-mono uppercase text-muted mb-1.5">Búsqueda rápida</label>
+            <div class="relative">
+              <input
+                id="catSearchInput"
+                type="text"
+                oninput="renderCatalog()"
+                placeholder="Buscar por IA, visión, PLC, Cobot, Siemens..."
+                class="w-full pl-9 pr-4 py-2.5 rounded-xl bg-porcelain border border-borderLight text-xs sm:text-sm text-ink focus:outline-none focus:ring-2 focus:ring-cobalt"
+              />
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Filtro Perfil Objetivo -->
+          <div class="lg:col-span-4">
+            <label class="block text-[11px] font-mono uppercase text-muted mb-1.5">Perfil Objetivo</label>
+            <div class="grid grid-cols-4 gap-1 bg-slate-100 p-1 rounded-xl">
+              <button onclick="setCatalogProfileFilter('all')" id="catProf-all" class="cat-prof-pill py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer">Todos</button>
+              <button onclick="setCatalogProfileFilter('b2b')" id="catProf-b2b" class="cat-prof-pill py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer">B2B</button>
+              <button onclick="setCatalogProfileFilter('b2c')" id="catProf-b2c" class="cat-prof-pill py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer">B2C</button>
+              <button onclick="setCatalogProfileFilter('edu')" id="catProf-edu" class="cat-prof-pill py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer">FP/Uni</button>
+            </div>
+          </div>
+
+          <!-- Filtro Ecosistema OEM -->
+          <div class="lg:col-span-3">
+            <label for="catOemFilter" class="block text-[11px] font-mono uppercase text-muted mb-1.5">Ecosistema OEM</label>
+            <select id="catOemFilter" onchange="renderCatalog()" class="w-full py-2.5 px-3 rounded-xl bg-porcelain border border-borderLight text-xs sm:text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-cobalt cursor-pointer">
+              <option value="all">Todos los fabricantes OEM</option>
+              <option value="Siemens">Siemens</option>
+              <option value="ABB">ABB Robotics</option>
+              <option value="Fanuc">Fanuc</option>
+              <option value="Festo">Festo</option>
+              <option value="Universal Robots">Universal Robots</option>
+              <option value="Schneider Electric">Schneider Electric</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filtro Área Tecnológica -->
+        <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
+          <span class="text-[11px] font-mono uppercase text-muted mr-1">Área Tecnológica:</span>
+          <button onclick="setCatalogAreaFilter('all')" data-area="all" class="cat-area-pill px-3 py-1.5 rounded-lg text-xs font-bold bg-cobalt text-white transition-all cursor-pointer">Todas</button>
+          <button onclick="setCatalogAreaFilter('IA Predictiva & Edge')" data-area="IA Predictiva & Edge" class="cat-area-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-muted hover:text-ink transition-all cursor-pointer">IA Predictiva &amp; Edge</button>
+          <button onclick="setCatalogAreaFilter('Visión Artificial')" data-area="Visión Artificial" class="cat-area-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-muted hover:text-ink transition-all cursor-pointer">Visión Artificial</button>
+          <button onclick="setCatalogAreaFilter('Robótica Colaborativa')" data-area="Robótica Colaborativa" class="cat-area-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-muted hover:text-ink transition-all cursor-pointer">Robótica Colaborativa</button>
+          <button onclick="setCatalogAreaFilter('PLC & Automatización')" data-area="PLC & Automatización" class="cat-area-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-muted hover:text-ink transition-all cursor-pointer">PLC &amp; Automatización</button>
+          <button onclick="setCatalogAreaFilter('Gemelos Digitales')" data-area="Gemelos Digitales" class="cat-area-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-muted hover:text-ink transition-all cursor-pointer">Gemelos Digitales</button>
+        </div>
+      </div>
+
+      <!-- Grid de 8 Cursos Técnicos -->
+      <div id="catalogGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Renderizado dinámico JS -->
+      </div>
+
+      <!-- Estado vacío -->
+      <div id="catalogEmptyState" class="hidden bg-white rounded-2xl border border-borderLight p-12 text-center space-y-3">
+        <p class="font-display text-lg font-bold text-ink">No hay cursos que coincidan con esos filtros</p>
+        <p class="text-xs sm:text-sm text-muted">Restablece los filtros para explorar los 8 itinerarios de IA y Automatización Industrial.</p>
+        <button onclick="resetCatalogFilters()" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-cobalt hover:bg-cobaltHover cursor-pointer">
+          Mostrar todos los cursos
+        </button>
+      </div>
+
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- INTERFAZ: LANDING DE SIMULADORES (acceso a PlantSim, FluidLab, RoboTwin) -->
+    <!-- =================================================================== -->
+    <section id="view-simuladores" class="spa-view hidden max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-11 space-y-8">
+
+      <!-- Cabecera editorial -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-end">
+        <div class="lg:col-span-8 space-y-3.5">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-tealTint border border-teal-200 text-tealMetric text-xs font-mono font-semibold">
+            <span class="w-1.5 h-1.5 rounded-full bg-tealMetric"></span>
+            <span>SOFTWARE · LABORATORIO VIRTUAL EN EL NAVEGADOR</span>
+          </div>
+          <h1 class="font-display text-3xl sm:text-4xl lg:text-[42px] font-bold tracking-tight text-ink leading-[1.12]">
+            Practica con simuladores técnicos <span class="text-cobalt">sin instalar nada</span>.
+          </h1>
+          <p class="text-sm sm:text-base text-muted max-w-2xl leading-relaxed">
+            Tres entornos interactivos para entrenar automatización de planta, neumática y robótica industrial, sin licencias ni equipos físicos. Elige uno y empieza a experimentar.
+          </p>
+        </div>
+        <div class="lg:col-span-4 grid grid-cols-3 gap-2.5 bg-white p-4 rounded-2xl border border-borderLight shadow-card">
+          <div class="text-center sm:text-left">
+            <div class="font-mono text-lg sm:text-xl font-bold text-cobalt">3</div>
+            <div class="text-[11px] text-muted leading-tight mt-0.5">Simuladores</div>
+          </div>
+          <div class="text-center sm:text-left border-x border-slate-100 px-2">
+            <div class="font-mono text-lg sm:text-xl font-bold text-tealMetric">0</div>
+            <div class="text-[11px] text-muted leading-tight mt-0.5">Instalaciones</div>
+          </div>
+          <div class="text-center sm:text-left">
+            <div class="font-mono text-lg sm:text-xl font-bold text-ink">5</div>
+            <div class="text-[11px] text-muted leading-tight mt-0.5">Lenguajes robot</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Los 3 simuladores -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <article class="group bg-white rounded-2xl border border-borderLight hover:border-cobalt/50 shadow-card hover:shadow-card-hover overflow-hidden flex flex-col justify-between transition-all">
+          <div>
+            <button onclick="openSimulator('io')" aria-label="Abrir PlantSim 3D" class="relative block w-full h-44 overflow-hidden cursor-pointer text-left">
+              <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"><svg viewBox="0 0 400 176" preserveAspectRatio="xMidYMid slice" class="w-full h-full" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="176" fill="#EFF6FF"/><g stroke="#CBD5E1" stroke-width="1" opacity="0.6"><line x1="0" y1="44" x2="400" y2="44"/><line x1="0" y1="88" x2="400" y2="88"/><line x1="0" y1="132" x2="400" y2="132"/><line x1="80" y1="0" x2="80" y2="176"/><line x1="160" y1="0" x2="160" y2="176"/><line x1="240" y1="0" x2="240" y2="176"/><line x1="320" y1="0" x2="320" y2="176"/></g>
+  <rect x="195" y="30" width="8" height="88" fill="#94A3B8"/><rect x="262" y="30" width="8" height="88" fill="#94A3B8"/>
+  <rect x="195" y="30" width="75" height="8" rx="2" fill="#475569"/>
+  <rect x="218" y="38" width="28" height="14" rx="3" fill="#0F172A"/>
+  <polygon points="224,52 240,52 254,92 210,92" fill="#0D9488" opacity="0.28"/>
+  <rect x="24" y="118" width="352" height="22" rx="11" fill="#0F172A"/>
+  <g fill="#475569"><circle cx="52" cy="129" r="4"/><circle cx="92" cy="129" r="4"/><circle cx="132" cy="129" r="4"/><circle cx="172" cy="129" r="4"/><circle cx="212" cy="129" r="4"/><circle cx="252" cy="129" r="4"/><circle cx="292" cy="129" r="4"/><circle cx="332" cy="129" r="4"/></g>
+  <rect x="56" y="92" width="30" height="26" rx="3" fill="#1D4ED8"/>
+  <rect x="128" y="92" width="30" height="26" rx="3" fill="#60A5FA"/>
+  <rect x="215" y="92" width="34" height="26" rx="3" fill="#1D4ED8"/>
+  <rect x="296" y="92" width="28" height="26" rx="3" fill="#D97706"/>
+  <rect x="318" y="36" width="12" height="48" rx="3" fill="#475569"/><rect x="326" y="52" width="26" height="8" rx="2" fill="#94A3B8"/>
+  <path d="M310 108 L336 150" stroke="#D97706" stroke-width="2.5" stroke-dasharray="5 4" fill="none" stroke-linecap="round"/>
+  <rect x="318" y="148" width="58" height="22" rx="4" fill="#fff" stroke="#D97706" stroke-width="2" stroke-dasharray="4 3"/>
+  <rect x="332" y="153" width="22" height="12" rx="2" fill="#D97706"/>
+</svg></div>
+              <span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold bg-white/95 text-cobalt shadow-sm">SIMULADOR 1/4</span>
+            </button>
+            <div class="p-5 sm:p-6">
+              <p class="text-xs font-mono font-semibold text-cobalt">Logística automatizada y visión IA</p>
+              <h3 class="font-display text-xl font-bold text-ink mt-1 group-hover:text-cobalt transition-colors">PlantSim 3D</h3>
+              <p class="text-xs sm:text-sm text-muted mt-2 leading-relaxed">Planta en 3D con cinta transportadora, cámara de visión artificial y expulsor. Observa cómo se clasifican las piezas y cómo evolucionan los rechazos y la OEE en tiempo real.</p>
+              <ul class="mt-4 space-y-1.5 text-xs text-ink">
+              <li class="flex items-start gap-2"><span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-cobalt shrink-0"></span><span>Clasificación de piezas por visión IA en línea</span></li>
+              <li class="flex items-start gap-2"><span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-cobalt shrink-0"></span><span>Telemetría de piezas OK, rechazos y OEE</span></li>
+              <li class="flex items-start gap-2"><span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-cobalt shrink-0"></span><span>Cámaras: general, visión IA y expulsor</span></li>
+              </ul>
+              <div class="mt-4 flex flex-wrap gap-1.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">THREE.JS</span><span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">VISIÓN IA</span><span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">OEE</span></div>
+            </div>
+          </div>
+          <div class="px-5 sm:px-6 pb-5 sm:pb-6 flex items-center gap-2">
+            <button onclick="openSimulator('io')" class="flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-cobalt hover:bg-cobaltHover transition-colors flex items-center justify-between cursor-pointer">
+              <span>Abrir simulador</span><span aria-hidden="true">→</span>
+            </button>
+            <a href="KinetiaIO.html" target="_blank" rel="noopener" title="Abrir en una pestaña nueva" aria-label="Abrir PlantSim 3D en una pestaña nueva" class="p-3 rounded-xl border border-borderLight text-muted hover:text-cobalt hover:border-cobalt/50 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 4h6m0 0v6m0-6L10 14M5 6h4M5 6v13h13v-4"/></svg>
+            </a>
+          </div>
+        </article>
+        <article class="group bg-white rounded-2xl border border-borderLight hover:border-tealMetric/50 shadow-card hover:shadow-card-hover overflow-hidden flex flex-col justify-between transition-all">
+          <div>
+            <button onclick="openSimulator('fluid')" aria-label="Abrir FluidLab Studio" class="relative block w-full h-44 overflow-hidden cursor-pointer text-left">
+              <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"><svg viewBox="0 0 400 176" preserveAspectRatio="xMidYMid slice" class="w-full h-full" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="176" fill="#F0FDFA"/><g stroke="#CBD5E1" stroke-width="1" opacity="0.6"><line x1="0" y1="44" x2="400" y2="44"/><line x1="0" y1="88" x2="400" y2="88"/><line x1="0" y1="132" x2="400" y2="132"/><line x1="80" y1="0" x2="80" y2="176"/><line x1="160" y1="0" x2="160" y2="176"/><line x1="240" y1="0" x2="240" y2="176"/><line x1="320" y1="0" x2="320" y2="176"/></g>
+  <g stroke="#0F172A" stroke-width="3" fill="none" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="120" y="26" width="130" height="40" fill="#fff"/>
+    <line x1="170" y1="26" x2="170" y2="66"/>
+    <line x1="170" y1="46" x2="330" y2="46" stroke-width="6"/>
+    <path d="M135 66 V96"/><path d="M235 66 V82 H200 V96"/>
+    <rect x="120" y="96" width="48" height="44" fill="#fff"/><rect x="168" y="96" width="48" height="44" fill="#fff"/>
+    <rect x="216" y="106" width="22" height="24" fill="#fff"/>
+    <path d="M120 118 l-6 -5 l-6 10 l-6 -10 l-6 10 l-6 -5" stroke-width="2.5"/>
+    <path d="M144 140 V160"/><path d="M192 140 V160"/>
+  </g>
+  <g stroke="#0D9488" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M136 132 V106 m-5 6 l5 -6 l5 6"/><path d="M152 106 V132 m-5 -6 l5 6 l5 -6"/>
+    <path d="M178 132 L204 106 m-9 1 h9 v9"/><path d="M180 106 L204 132"/>
+  </g>
+  <path d="M144 150 l-7 -10 h14 z" fill="#0D9488"/>
+  <rect x="330" y="36" width="8" height="20" rx="2" fill="#0F172A"/>
+  <text x="262" y="38" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#0D9488">1A</text>
+  <text x="222" y="152" font-family="JetBrains Mono, monospace" font-size="11" font-weight="700" fill="#475569">5/2</text>
+</svg></div>
+              <span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold bg-white/95 text-tealMetric shadow-sm">SIMULADOR 2/4</span>
+            </button>
+            <div class="p-5 sm:p-6">
+              <p class="text-xs font-mono font-semibold text-tealMetric">Neumática y electroneumática ISO 1219</p>
+              <h3 class="font-display text-xl font-bold text-ink mt-1 group-hover:text-tealMetric transition-colors">FluidLab Studio</h3>
+              <p class="text-xs sm:text-sm text-muted mt-2 leading-relaxed">Constructor de circuitos con drag &amp; drop. Monta el esquema con símbolos normalizados, ajusta la presión de red y simula el movimiento del circuito.</p>
+              <ul class="mt-4 space-y-1.5 text-xs text-ink">
+              <li class="flex items-start gap-2"><span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-tealMetric shrink-0"></span><span>Biblioteca de componentes ISO 1219</span></li>
+              <li class="flex items-start gap-2"><span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-tealMetric shrink-0"></span><span>Plantillas: mando 5/2, seguridad bimanual y ciclo automático</span></li>
+              <li class="flex items-start gap-2"><span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-tealMetric shrink-0"></span><span>Modo edición y modo simulación</span></li>
+              </ul>
+              <div class="mt-4 flex flex-wrap gap-1.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">ISO 1219</span><span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">NEUMÁTICA</span><span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">CAD</span></div>
+            </div>
+          </div>
+          <div class="px-5 sm:px-6 pb-5 sm:pb-6 flex items-center gap-2">
+            <button onclick="openSimulator('fluid')" class="flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-tealMetric hover:bg-teal-700 transition-colors flex items-center justify-between cursor-pointer">
+              <span>Abrir simulador</span><span aria-hidden="true">→</span>
+            </button>
+            <a href="KinetiaFluid.html" target="_blank" rel="noopener" title="Abrir en una pestaña nueva" aria-label="Abrir FluidLab Studio en una pestaña nueva" class="p-3 rounded-xl border border-borderLight text-muted hover:text-tealMetric hover:border-tealMetric/50 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 4h6m0 0v6m0-6L10 14M5 6h4M5 6v13h13v-4"/></svg>
+            </a>
+          </div>
+        </article>
+        <article class="group bg-white rounded-2xl border border-borderLight hover:border-ink/50 shadow-card hover:shadow-card-hover overflow-hidden flex flex-col justify-between transition-all">
+          <div>
+            <button onclick="openSimulator('robot')" aria-label="Abrir RoboTwin 3D" class="relative block w-full h-44 overflow-hidden cursor-pointer text-left">
+              <div class="w-full h-full group-hover:scale-105 transition-transform duration-500"><svg viewBox="0 0 400 176" preserveAspectRatio="xMidYMid slice" class="w-full h-full" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="176" fill="#F1F5F9"/><g stroke="#CBD5E1" stroke-width="1" opacity="0.6"><line x1="0" y1="44" x2="400" y2="44"/><line x1="0" y1="88" x2="400" y2="88"/><line x1="0" y1="132" x2="400" y2="132"/><line x1="80" y1="0" x2="80" y2="176"/><line x1="160" y1="0" x2="160" y2="176"/><line x1="240" y1="0" x2="240" y2="176"/><line x1="320" y1="0" x2="320" y2="176"/></g>
+  <text x="20" y="34" font-family="JetBrains Mono, monospace" font-size="10" fill="#475569">MoveL p10, v500</text>
+  <text x="20" y="50" font-family="JetBrains Mono, monospace" font-size="10" fill="#94A3B8">GripperClose</text>
+  <line x1="40" y1="152" x2="380" y2="152" stroke="#94A3B8" stroke-width="2"/>
+  <rect x="70" y="138" width="70" height="14" rx="3" fill="#0F172A"/>
+  <rect x="88" y="116" width="34" height="22" rx="4" fill="#1D4ED8"/>
+  <path d="M105 112 L170 58" stroke="#1D4ED8" stroke-width="14" stroke-linecap="round"/>
+  <path d="M170 58 L250 86" stroke="#0F172A" stroke-width="11" stroke-linecap="round"/>
+  <path d="M250 86 L284 108" stroke="#475569" stroke-width="8" stroke-linecap="round"/>
+  <g fill="#fff" stroke="#0F172A" stroke-width="3"><circle cx="105" cy="112" r="10"/><circle cx="170" cy="58" r="9"/><circle cx="250" cy="86" r="8"/></g>
+  <path d="M284 108 L276 126 M284 108 L298 122" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
+  <path d="M287 132 C322 154 352 124 354 76" stroke="#0D9488" stroke-width="2.5" stroke-dasharray="5 4" fill="none" stroke-linecap="round"/>
+  <circle cx="287" cy="132" r="9" fill="none" stroke="#0D9488" stroke-width="1.5" opacity="0.6"/><circle cx="287" cy="132" r="4" fill="#0D9488"/>
+  <circle cx="354" cy="72" r="5" fill="#D97706"/>
+</svg></div>
+              <span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold bg-white/95 text-ink shadow-sm">SIMULADOR 3/4</span>
+            </button>
+            <div class="p-5 sm:p-6">
+              <p class="text-xs font-mono font-semibold text-ink">Programación robótica multimarca</p>
+              <h3 class="font-display text-xl font-bold text-ink mt-1 group-hover:text-ink transition-colors">RoboTwin 3D</h3>
+              <p class="text-xs sm:text-sm text-muted mt-2 leading-relaxed">Brazo robótico en 3D que se programa en el lenguaje de cada fabricante, con una guía interactiva de programación y telemetría del TCP en directo.</p>
+              <ul class="mt-4 space-y-1.5 text-xs text-ink">
+              <li class="flex items-start gap-2"><span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-ink shrink-0"></span><span>RAPID, KRL, FANUC, UR y Yaskawa</span></li>
+              <li class="flex items-start gap-2"><span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-ink shrink-0"></span><span>Guía interactiva de programación</span></li>
+              <li class="flex items-start gap-2"><span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-ink shrink-0"></span><span>Control de pinza y seguridad de colisión</span></li>
+              </ul>
+              <div class="mt-4 flex flex-wrap gap-1.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">MULTI-OEM</span><span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">ROBÓTICA</span><span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-600 border border-slate-200">TCP</span></div>
+            </div>
+          </div>
+          <div class="px-5 sm:px-6 pb-5 sm:pb-6 flex items-center gap-2">
+            <button onclick="openSimulator('robot')" class="flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-ink hover:bg-slate-800 transition-colors flex items-center justify-between cursor-pointer">
+              <span>Abrir simulador</span><span aria-hidden="true">→</span>
+            </button>
+            <a href="KinetiaRobotwin.html" target="_blank" rel="noopener" title="Abrir en una pestaña nueva" aria-label="Abrir RoboTwin 3D en una pestaña nueva" class="p-3 rounded-xl border border-borderLight text-muted hover:text-ink hover:border-ink/50 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 4h6m0 0v6m0-6L10 14M5 6h4M5 6v13h13v-4"/></svg>
+            </a>
+          </div>
+        </article>
+      </div>
+
+      <!-- Simulador 4/4: gemelo digital ya integrado en la plataforma -->
+      <div class="bg-white rounded-2xl border border-borderLight shadow-card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <p class="text-xs font-mono font-semibold text-muted">SIMULADOR 4/4 · INCLUIDO EN LA PLATAFORMA</p>
+          <p class="font-display text-base sm:text-lg font-bold text-ink mt-1">Gemelo digital de la célula con visión IA y cobot de 6 ejes</p>
+          <p class="text-xs sm:text-sm text-muted mt-0.5">Inyecta anomalías en planta y practica el mantenimiento predictivo paso a paso.</p>
+        </div>
+        <button onclick="navigateTo('simulador')" class="shrink-0 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold text-cobalt bg-cobaltTint hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer">
+          Abrir Simulador 3D
+        </button>
+      </div>
+
+      <!-- CTA con imagen -->
+      <div class="relative overflow-hidden rounded-3xl bg-ink">
+        <img
+          src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&amp;fit=crop&amp;w=1600&amp;q=80"
+          alt="Brazo robótico industrial en una célula de fabricación"
+          onerror="this.style.display='none'"
+          class="absolute inset-0 w-full h-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-r from-ink via-ink/85 to-ink/30"></div>
+        <div class="relative px-6 sm:px-10 py-10 sm:py-14 max-w-2xl space-y-4">
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white leading-tight">
+            Lleva estos simuladores a tu planta, tu centro de FP o tu universidad.
+          </h2>
+          <p class="text-sm sm:text-base text-slate-200 leading-relaxed">
+            Te preparamos una demo guiada con el simulador que mejor encaje con tu equipo y tus objetivos de formación.
+          </p>
+          <div class="flex flex-wrap gap-3 pt-1">
+            <button onclick="openContextualModal()" class="px-6 py-3.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-cobalt hover:bg-cobaltHover shadow-sm transition-all cursor-pointer">
+              Solicitar Demo
+            </button>
+            <button onclick="openSimulator('io')" class="px-6 py-3.5 rounded-xl text-xs sm:text-sm font-bold text-ink bg-white hover:bg-slate-100 transition-all cursor-pointer">
+              Probar PlantSim 3D
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- VISOR DE SIMULADOR (iframe a pantalla completa dentro de la SPA)     -->
+    <!-- =================================================================== -->
+    <section id="view-visor" class="spa-view hidden w-full flex-1 flex flex-col">
+      <div class="bg-white border-b border-borderLight">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 h-12 flex items-center justify-between gap-3">
+          <button onclick="navigateTo('simuladores')" class="inline-flex items-center gap-1.5 text-xs font-bold text-muted hover:text-cobalt transition-colors cursor-pointer shrink-0">
+            <span aria-hidden="true">←</span><span class="hidden sm:inline">Simuladores</span>
+          </button>
+          <div class="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/80 overflow-x-auto">
+            <button onclick="openSimulator('io')" id="visorTab-io" class="px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer">PlantSim 3D</button>
+            <button onclick="openSimulator('fluid')" id="visorTab-fluid" class="px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer">FluidLab Studio</button>
+            <button onclick="openSimulator('robot')" id="visorTab-robot" class="px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer">RoboTwin 3D</button>
+          </div>
+          <a id="visorExternal" href="#" target="_blank" rel="noopener" class="text-xs font-bold text-muted hover:text-cobalt transition-colors shrink-0">
+            <span class="hidden sm:inline">Pestaña nueva </span><span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </div>
+      <div class="relative flex-1 bg-porcelain" style="min-height: calc(100vh - 116px);">
+        <div id="visorLoader" class="absolute inset-0 flex items-center justify-center text-xs font-mono text-muted">Cargando simulador…</div>
+        <iframe id="visorFrame" title="Simulador KINETIA" src="about:blank" allow="fullscreen" class="relative w-full h-full block border-0 bg-transparent" style="min-height: calc(100vh - 116px);"></iframe>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- INTERFAZ 4: SIMULADOR 3D INTERACTIVO (GEMELO DIGITAL EN THREE.JS)   -->
+    <!-- =================================================================== -->
+    <section id="view-simulador" class="spa-view hidden max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-5">
+
+      <button onclick="navigateTo('simuladores')" class="inline-flex items-center gap-1.5 text-xs font-bold text-muted hover:text-cobalt transition-colors cursor-pointer">
+        <span aria-hidden="true">←</span><span>Todos los simuladores</span>
+      </button>
+      
+      <!-- Cabecera Simulador 3D -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold bg-tealTint text-tealMetric border border-teal-200">
+              DIGITAL TWIN 3D · THREE.JS ENGINE
+            </span>
+            <span class="text-xs font-mono text-muted hidden sm:inline">Arrastra para orbitar 360° · Rueda para zoom</span>
+          </div>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-ink mt-1">
+            Célula de Fabricación Inteligente con Visión IA y Cobot 6 Ejes
+          </h2>
+        </div>
+
+        <!-- Botón Inyectar Anomalía en Planta -->
+        <div class="flex items-center gap-3">
+          <button id="btnInjectAnomaly" onclick="injectPlantAnomaly()" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-amberAlert hover:bg-amber-700 shadow-sm transition-all flex items-center gap-2 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>Inyectar Anomalía en Planta</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Layout Principal: Lienzo 3D (7 cols) + Panel de Control Lateral (5 cols) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        
+        <!-- COLUMNA IZQUIERDA: VISOR 3D INTERACTIVO + CONSOLA EDGE -->
+        <div class="lg:col-span-7 flex flex-col gap-4">
+          
+          <!-- Banner de Alerta Crítica (solo cuando hay anomalía activa) -->
+          <div id="simAlertBanner" class="hidden rounded-2xl bg-red-50 border border-red-300 p-4 flex items-start gap-3">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping mt-1.5 shrink-0"></span>
+            <div class="flex-1">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span id="simAlertCode" class="font-mono text-xs font-bold text-red-700">FAULT-AI-0x91</span>
+                <span class="font-mono text-[11px] font-bold text-amberAlert">COMPLETA LOS 3 PASOS DE DIAGNÓSTICO →</span>
+              </div>
+              <p id="simAlertMsg" class="text-xs sm:text-sm text-red-900 font-medium mt-0.5">
+                Deriva térmica en articulación 3 del Cobot y caída de confianza CNN Vision.
+              </p>
+            </div>
+          </div>
+
+          <!-- Contenedor Canvas 3D -->
+          <div class="bg-white rounded-2xl border border-borderLight shadow-card overflow-hidden flex flex-col">
+            <!-- Barra superior del visor 3D: Presets de Cámara + Indicador OEE -->
+            <div class="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 bg-slate-50/70">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <button onclick="setCameraPreset('iso')" id="camBtn-iso" class="cam-preset-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-cobalt text-white transition-all cursor-pointer">Vista Isométrica</button>
+                <button onclick="setCameraPreset('vision')" id="camBtn-vision" class="cam-preset-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-muted hover:text-ink transition-all cursor-pointer">Cámara Visión IA</button>
+                <button onclick="setCameraPreset('cobot')" id="camBtn-cobot" class="cam-preset-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-muted hover:text-ink transition-all cursor-pointer">Cobot 6 Ejes</button>
+                <button onclick="setCameraPreset('plc')" id="camBtn-plc" class="cam-preset-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-muted hover:text-ink transition-all cursor-pointer">Armario Edge PLC</button>
+              </div>
+
+              <!-- Indicador OEE en vivo -->
+              <div class="flex items-center gap-2 bg-white px-3 py-1 rounded-xl border border-slate-200">
+                <span class="text-[10px] font-mono uppercase text-muted">OEE Línea:</span>
+                <span id="simOeeValue" class="font-mono text-sm font-bold text-tealMetric">99,2%</span>
+                <span id="simOeeDot" class="w-2.5 h-2.5 rounded-full bg-tealMetric"></span>
+              </div>
+            </div>
+
+            <!-- Canvas WebGL Three.js -->
+            <div id="threeCanvasWrapper" class="relative w-full h-[340px] sm:h-[390px] bg-[#EEF2F6] select-none cursor-grab active:cursor-grabbing">
+              <canvas id="threeDigitalTwinCanvas" class="w-full h-full block"></canvas>
+              <!-- Etiqueta flotante inferior izquierda -->
+              <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm border border-slate-200/90 px-3 py-1.5 rounded-xl text-[11px] font-mono text-ink pointer-events-none">
+                <span id="hudCellStatus" class="font-bold text-tealMetric">● OPERACIÓN NOMINAL</span>
+                <span class="text-slate-400 mx-1.5">|</span>
+                <span id="hudCycleRate">42 pzs/min</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Consola de Telemetría Edge en Vivo -->
+          <div class="bg-white rounded-2xl border border-borderLight p-4 shadow-card">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[11px] font-mono font-bold uppercase text-muted">TELEMETRÍA EDGE AI · OPC-UA / PROFINET STREAM</span>
+              <button onclick="clearTelemetryLogs()" class="text-[11px] font-mono text-cobalt hover:underline cursor-pointer">Limpiar</button>
+            </div>
+            <div id="telemetryConsole" class="bg-ink text-slate-200 rounded-xl p-3 h-28 overflow-y-auto font-mono text-[11px] space-y-1">
+              <!-- Logs en vivo -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- COLUMNA DERECHA: ESCENARIOS, SLIDERS Y PROTOCOLO 3 PASOS -->
+        <div class="lg:col-span-5 flex flex-col gap-4">
+          
+          <!-- 1. Selector de 3 Escenarios Técnicos -->
+          <div class="bg-white rounded-2xl border border-borderLight p-5 shadow-card space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-mono font-bold uppercase text-muted">1. Escenario Técnico Activo</span>
+              <span class="text-[11px] font-mono text-cobalt font-semibold">3 Prácticas</span>
+            </div>
+
+            <div class="space-y-2">
+              <button onclick="selectScenario3D('vision')" id="scenCard-vision" class="scen-card w-full p-3 rounded-xl border-2 border-cobalt bg-cobaltTint/60 text-left transition-all cursor-pointer">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs sm:text-sm font-bold text-ink">Inspección de Calidad con Visión IA (CNN)</span>
+                  <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-cobalt text-white">CNN</span>
+                </div>
+                <p class="text-xs text-muted mt-0.5">Clasificación óptica en tiempo real y rechazo automático cero defectos.</p>
+              </button>
+
+              <button onclick="selectScenario3D('predictive')" id="scenCard-predictive" class="scen-card w-full p-3 rounded-xl border border-borderLight bg-porcelain hover:bg-slate-100/70 text-left transition-all cursor-pointer">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs sm:text-sm font-bold text-ink">Mantenimiento Predictivo en Servo/Cobot</span>
+                  <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-ink">EDGE ML</span>
+                </div>
+                <p class="text-xs text-muted mt-0.5">Análisis espectral FFT de vibración y deriva térmica en ejes articulados.</p>
+              </button>
+
+              <button onclick="selectScenario3D('cycle')" id="scenCard-cycle" class="scen-card w-full p-3 rounded-xl border border-borderLight bg-porcelain hover:bg-slate-100/70 text-left transition-all cursor-pointer">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs sm:text-sm font-bold text-ink">Optimización de Ciclo y Seguridad Colaborativa</span>
+                  <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-ink">COBOT</span>
+                </div>
+                <p class="text-xs text-muted mt-0.5">Sincronización dinámica cinta-robot y zonas colaborativas ISO/TS 15066.</p>
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Sliders Interactivos en Tiempo Real -->
+          <div class="bg-white rounded-2xl border border-borderLight p-5 shadow-card space-y-4">
+            <span class="block text-[11px] font-mono font-bold uppercase text-muted">2. Parámetros en Tiempo Real (Afectan al 3D)</span>
+
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="font-semibold text-ink">Velocidad de Cinta / Cobot</span>
+                <span id="lblSpeed3D" class="font-mono font-bold text-cobalt">100% (850 mm/s)</span>
+              </div>
+              <input id="rngSpeed3D" type="range" min="25" max="160" value="100" oninput="onSlider3DChange()" class="w-full" />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="font-semibold text-ink">Umbral de Confianza IA (%)</span>
+                <span id="lblConf3D" class="font-mono font-bold text-tealMetric">94%</span>
+              </div>
+              <input id="rngConf3D" type="range" min="55" max="99" value="94" oninput="onSlider3DChange()" class="w-full" />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="font-semibold text-ink">Sensibilidad de Vibración (FFT)</span>
+                <span id="lblVib3D" class="font-mono font-bold text-ink">6.5 / 10</span>
+              </div>
+              <input id="rngVib3D" type="range" min="1" max="10" step="0.5" value="6.5" oninput="onSlider3DChange()" class="w-full" />
+            </div>
+          </div>
+
+          <!-- 3. Protocolo Guiado de Diagnóstico y Reparación (3 Pasos) -->
+          <div class="bg-white rounded-2xl border border-borderLight p-5 shadow-card space-y-3 flex-1 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-mono font-bold uppercase text-muted">3. Protocolo de Diagnóstico IA</span>
+              <span id="diagBadge3D" class="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-tealTint text-tealMetric">
+                Sin incidencias
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button id="step3d-1" onclick="executeRepairStep(1)" disabled class="p-3 rounded-xl border border-slate-200 bg-slate-50 text-left opacity-45 cursor-not-allowed transition-all">
+                <div class="text-[10px] font-mono font-bold text-cobalt">PASO 01</div>
+                <div class="text-xs font-bold text-ink mt-0.5">Auditar Tensores y FFT</div>
+              </button>
+              <button id="step3d-2" onclick="executeRepairStep(2)" disabled class="p-3 rounded-xl border border-slate-200 bg-slate-50 text-left opacity-45 cursor-not-allowed transition-all">
+                <div class="text-[10px] font-mono font-bold text-cobalt">PASO 02</div>
+                <div class="text-xs font-bold text-ink mt-0.5">Recalibrar Pesos IA</div>
+              </button>
+              <button id="step3d-3" onclick="executeRepairStep(3)" disabled class="p-3 rounded-xl border border-slate-200 bg-slate-50 text-left opacity-45 cursor-not-allowed transition-all">
+                <div class="text-[10px] font-mono font-bold text-tealMetric">PASO 03</div>
+                <div class="text-xs font-bold text-ink mt-0.5">Rearmar OEE 99,2%</div>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- INTERFAZ 5: CALCULADORA FINANCIERA Y DE IMPACTO (3 PERFILES)        -->
+    <!-- =================================================================== -->
+    <section id="view-calculadora" class="spa-view hidden max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10 space-y-6">
+      
+      <!-- Encabezado + Selector Sincronizado -->
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div>
+          <span id="calcTag" class="text-xs font-mono font-bold uppercase text-cobalt">SIMULADOR FINANCIERO B2B · FUNDAE + ROI</span>
+          <h2 id="calcTitle" class="font-display text-2xl sm:text-3xl font-bold text-ink mt-1">
+            Calculadora de Bonificación FUNDAE y Retorno Operativo (ROI)
+          </h2>
+        </div>
+
+        <div class="inline-flex p-1 rounded-xl bg-white border border-borderLight shadow-sm self-start lg:self-auto">
+          <button onclick="setSegment('b2b')" id="calcModeBtn-b2b" class="calc-mode-btn px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer">Empresas B2B</button>
+          <button onclick="setSegment('b2c')" id="calcModeBtn-b2c" class="calc-mode-btn px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer">Profesionales B2C</button>
+          <button onclick="setSegment('edu')" id="calcModeBtn-edu" class="calc-mode-btn px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer">FP / Universidad</button>
+        </div>
+      </div>
+
+      <!-- MODO 1: EMPRESAS INDUSTRIALES (B2B) -->
+      <div id="calcBody-b2b" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-borderLight p-6 shadow-card space-y-5">
+          <div>
+            <div class="flex justify-between text-xs sm:text-sm font-bold mb-1.5">
+              <span>Técnicos / Operarios a formar</span>
+              <span id="b2bOutWorkers" class="font-mono text-cobalt bg-cobaltTint px-2.5 py-0.5 rounded-lg">25 técnicos</span>
+            </div>
+            <input id="inB2bWorkers" type="range" min="1" max="200" value="25" oninput="updateB2BCalc()" class="w-full" />
+          </div>
+
+          <div>
+            <label for="inB2bTier" class="block text-xs sm:text-sm font-bold mb-1.5">Tamaño de plantilla (Tramo oficial FUNDAE)</label>
+            <select id="inB2bTier" onchange="updateB2BCalc()" class="w-full py-2.5 px-3.5 rounded-xl bg-porcelain border border-borderLight text-xs sm:text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-cobalt cursor-pointer">
+              <option value="1.00">1 – 9 trabajadores (100% bonificable)</option>
+              <option value="0.75" selected>10 – 49 trabajadores (75% bonificable)</option>
+              <option value="0.60">50 – 249 trabajadores (60% bonificable)</option>
+              <option value="0.50">+250 trabajadores (50% bonificable)</option>
+            </select>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs sm:text-sm font-bold mb-1.5">
+              <span>Horas del itinerario IA + Automatización</span>
+              <span id="b2bOutHours" class="font-mono text-cobalt bg-cobaltTint px-2.5 py-0.5 rounded-lg">60 horas</span>
+            </div>
+            <input id="inB2bHours" type="range" min="20" max="120" step="5" value="60" oninput="updateB2BCalc()" class="w-full" />
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-porcelain border border-borderLight flex items-center justify-between gap-3">
+            <div>
+              <div class="text-xs sm:text-sm font-bold text-ink">Cofinanciación Fondos UE Digitalización</div>
+              <div class="text-[11px] text-muted">Subvenciona el 50% del tramo no cubierto por FUNDAE.</div>
+            </div>
+            <input id="inB2bEu" type="checkbox" checked onchange="updateB2BCalc()" class="w-5 h-5 accent-cobalt rounded cursor-pointer" />
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-borderLight p-6 shadow-card flex flex-col justify-between space-y-6">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="p-3.5 rounded-xl bg-porcelain border border-borderLight">
+              <div class="text-[11px] text-muted">Inversión Bruta</div>
+              <div id="b2bResGross" class="font-mono text-lg sm:text-xl font-bold text-ink mt-1">19.500 €</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-cobaltTint/60 border border-blue-200">
+              <div class="text-[11px] text-cobalt font-semibold">Crédito FUNDAE</div>
+              <div id="b2bResFundae" class="font-mono text-lg sm:text-xl font-bold text-cobalt mt-1">-14.625 €</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-tealTint/60 border border-teal-200">
+              <div class="text-[11px] text-tealMetric font-semibold">Fondos UE</div>
+              <div id="b2bResEu" class="font-mono text-lg sm:text-xl font-bold text-tealMetric mt-1">-2.438 €</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-ink text-white">
+              <div class="text-[11px] text-slate-300 font-semibold">Coste Neto Real</div>
+              <div id="b2bResNet" class="font-mono text-lg sm:text-xl font-bold text-white mt-1">2.437 €</div>
+            </div>
+          </div>
+
+          <!-- Gráfico Visual Comparativo de Barras -->
+          <div class="bg-porcelain rounded-xl p-4 border border-borderLight space-y-3">
+            <div class="flex items-center justify-between text-xs font-bold text-ink">
+              <span>Comparativa: Coste Neto Empresa vs. Ahorro Operativo Anual (OEE)</span>
+              <span id="b2bResRoiBadge" class="font-mono text-tealMetric bg-tealTint px-2.5 py-0.5 rounded-md border border-teal-200">ROI: 27,7x</span>
+            </div>
+            <div class="space-y-2.5">
+              <div>
+                <div class="flex justify-between text-[11px] font-mono text-muted mb-1">
+                  <span>Coste Neto Empresa</span>
+                  <span id="b2bBarNetLbl">2.437 €</span>
+                </div>
+                <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                  <div id="b2bBarNet" class="h-full bg-cobalt rounded-full transition-all duration-300" style="width: 12%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-[11px] font-mono text-tealMetric font-bold mb-1">
+                  <span>Ahorro Estimado por Reducción de Paradas (1er año)</span>
+                  <span id="b2bBarSavLbl">+67.500 €</span>
+                </div>
+                <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                  <div id="b2bBarSav" class="h-full bg-tealMetric rounded-full transition-all duration-300" style="width: 100%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
+            <p class="text-xs text-muted">Tramitamos el crédito FUNDAE sin coste administrativo adicional.</p>
+            <button onclick="openModalWithCalculation()" class="px-5 py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-cobalt hover:bg-cobaltHover transition-colors cursor-pointer shrink-0">
+              Solicitar Estudio FUNDAE con estos Datos →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODO 2: PROFESIONALES Y TÉCNICOS (B2C) -->
+      <div id="calcBody-b2c" class="hidden grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-borderLight p-6 shadow-card space-y-5">
+          <div>
+            <label class="block text-xs sm:text-sm font-bold mb-2">Modalidad de Suscripción / Programa</label>
+            <div class="grid grid-cols-2 gap-2.5">
+              <button onclick="setB2CMode('monthly')" id="b2cOpt-monthly" class="p-3 rounded-xl border-2 border-cobalt bg-cobaltTint/50 text-left cursor-pointer">
+                <div class="font-mono text-xs font-bold text-cobalt">PLAN PRO MENSUAL</div>
+                <div class="font-mono text-base font-bold text-ink mt-0.5">59 € / mes</div>
+              </button>
+              <button onclick="setB2CMode('bootcamp')" id="b2cOpt-bootcamp" class="p-3 rounded-xl border border-borderLight bg-porcelain text-left cursor-pointer">
+                <div class="font-mono text-xs font-bold text-tealMetric">CERTIFICACIÓN 4M</div>
+                <div class="font-mono text-base font-bold text-ink mt-0.5">490 € único</div>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label for="inB2cRole" class="block text-xs sm:text-sm font-bold mb-1.5">Perfil Actual y Objetivo Profesional</label>
+            <select id="inB2cRole" onchange="updateB2CCalc()" class="w-full py-2.5 px-3.5 rounded-xl bg-porcelain border border-borderLight text-xs sm:text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-cobalt cursor-pointer">
+              <option value="7800">Operario de Línea → Técnico Células IA (+7.800 €/año)</option>
+              <option value="6400" selected>Técnico Mantenimiento → Especialista Predictivo IA (+6.400 €/año)</option>
+              <option value="8900">Ingeniero Junior → Arquitecto IA + Robótica (+8.900 €/año)</option>
+            </select>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs sm:text-sm font-bold mb-1.5">
+              <span>Dedicación semanal en Simulador 3D</span>
+              <span id="b2cOutHours" class="font-mono text-tealMetric bg-tealTint px-2.5 py-0.5 rounded-lg">8 h / semana</span>
+            </div>
+            <input id="inB2cHours" type="range" min="4" max="20" step="2" value="8" oninput="updateB2CCalc()" class="w-full" />
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-borderLight p-6 shadow-card flex flex-col justify-between space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="p-4 rounded-xl bg-porcelain border border-borderLight">
+              <div class="text-[11px] text-muted">Inversión Total Estimada</div>
+              <div id="b2cResCost" class="font-mono text-xl font-bold text-ink mt-1">236 €</div>
+              <div id="b2cResNote" class="text-[11px] text-muted mt-0.5">4 meses a 8h/sem</div>
+            </div>
+            <div class="p-4 rounded-xl bg-tealTint/70 border border-teal-200">
+              <div class="text-[11px] text-tealMetric font-semibold">Mejora Salarial Anual</div>
+              <div id="b2cResBoost" class="font-mono text-xl font-bold text-tealMetric mt-1">+6.400 € / año</div>
+              <div class="text-[11px] text-muted mt-0.5">Media sector Industria 4.0</div>
+            </div>
+            <div class="p-4 rounded-xl bg-cobaltTint/70 border border-blue-200">
+              <div class="text-[11px] text-cobalt font-semibold">Plazo de Amortización</div>
+              <div id="b2cResPayback" class="font-mono text-xl font-bold text-cobalt mt-1">0,4 meses</div>
+              <div class="text-[11px] text-muted mt-0.5">Tras promoción / nuevo puesto</div>
+            </div>
+          </div>
+
+          <!-- Gráfico Visual Comparativo B2C -->
+          <div class="bg-porcelain rounded-xl p-4 border border-borderLight space-y-3">
+            <div class="text-xs font-bold text-ink">Comparativa: Inversión Formativa vs. Incremento Salarial Primer Año</div>
+            <div class="space-y-2.5">
+              <div>
+                <div class="flex justify-between text-[11px] font-mono text-muted mb-1">
+                  <span>Inversión Formativa KINETIA</span>
+                  <span id="b2cBarCostLbl">236 €</span>
+                </div>
+                <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                  <div id="b2cBarCost" class="h-full bg-cobalt rounded-full transition-all duration-300" style="width: 8%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-[11px] font-mono text-tealMetric font-bold mb-1">
+                  <span>Incremento Salarial Bruto Anual Estimado</span>
+                  <span id="b2cBarBoostLbl">+6.400 €</span>
+                </div>
+                <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                  <div id="b2cBarBoost" class="h-full bg-tealMetric rounded-full transition-all duration-300" style="width: 100%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
+            <p class="text-xs text-muted">Acceso inmediato 24/7 sin pagar licencias de software OEM.</p>
+            <button onclick="openModalWithCalculation()" class="px-5 py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-tealMetric hover:bg-teal-700 transition-colors cursor-pointer shrink-0">
+              Reservar Plaza con este Plan →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODO 3: CENTROS DE FP Y UNIVERSIDADES (ACADÉMICO) -->
+      <div id="calcBody-edu" class="hidden grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-borderLight p-6 shadow-card space-y-5">
+          <div>
+            <div class="flex justify-between text-xs sm:text-sm font-bold mb-1.5">
+              <span>Alumnos matriculados por curso</span>
+              <span id="eduOutStudents" class="font-mono text-cobalt bg-cobaltTint px-2.5 py-0.5 rounded-lg">120 alumnos</span>
+            </div>
+            <input id="inEduStudents" type="range" min="20" max="400" step="10" value="120" oninput="updateEduCalc()" class="w-full" />
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs sm:text-sm font-bold mb-1.5">
+              <span>Puestos virtuales simultáneos por aula</span>
+              <span id="eduOutStations" class="font-mono text-cobalt bg-cobaltTint px-2.5 py-0.5 rounded-lg">25 puestos</span>
+            </div>
+            <input id="inEduStations" type="range" min="10" max="60" step="5" value="25" oninput="updateEduCalc()" class="w-full" />
+          </div>
+
+          <div>
+            <label for="inEduEquip" class="block text-xs sm:text-sm font-bold mb-1.5">Equipamiento de Referencia del Laboratorio</label>
+            <select id="inEduEquip" onchange="updateEduCalc()" class="w-full py-2.5 px-3.5 rounded-xl bg-porcelain border border-borderLight text-xs sm:text-sm font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-cobalt cursor-pointer">
+              <option value="18500">Célula PLC Multimarca + HMI (Ref. físico 18.500 €/puesto)</option>
+              <option value="28000" selected>Célula Cobot 6 Ejes + Visión IA (Ref. físico 28.000 €/puesto)</option>
+              <option value="36000">Laboratorio Integral Industria 4.0 (Ref. físico 36.000 €/puesto)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-borderLight p-6 shadow-card flex flex-col justify-between space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="p-4 rounded-xl bg-red-50/70 border border-red-200">
+              <div class="text-[11px] text-red-700 font-semibold">Hardware Físico Tradicional</div>
+              <div id="eduResPhysical" class="font-mono text-xl font-bold text-red-800 mt-1">700.000 €</div>
+              <div class="text-[11px] text-muted mt-0.5">CapEx inicial + mantenimiento</div>
+            </div>
+            <div class="p-4 rounded-xl bg-cobaltTint/70 border border-blue-200">
+              <div class="text-[11px] text-cobalt font-semibold">Licencia KINETIA 3D Cloud</div>
+              <div id="eduResCloud" class="font-mono text-xl font-bold text-cobalt mt-1">14.400 € / año</div>
+              <div id="eduResPerStudent" class="text-[11px] text-muted mt-0.5">120 € / alumno al año</div>
+            </div>
+            <div class="p-4 rounded-xl bg-tealTint/70 border border-teal-200">
+              <div class="text-[11px] text-tealMetric font-semibold">Ahorro Neto CapEx</div>
+              <div id="eduResSavings" class="font-mono text-xl font-bold text-tealMetric mt-1">685.600 €</div>
+              <div id="eduResPct" class="text-[11px] font-mono font-bold text-tealMetric mt-0.5">Ahorro del 97,9%</div>
+            </div>
+          </div>
+
+          <!-- Gráfico Visual Comparativo CapEx -->
+          <div class="bg-porcelain rounded-xl p-4 border border-borderLight space-y-3">
+            <div class="text-xs font-bold text-ink">Comparativa Presupuestaria: Laboratorio Físico vs. Aulas Virtuales 3D</div>
+            <div class="space-y-2.5">
+              <div>
+                <div class="flex justify-between text-[11px] font-mono text-red-700 mb-1">
+                  <span>Inversión Hardware Físico por Puesto</span>
+                  <span id="eduBarPhysLbl">700.000 €</span>
+                </div>
+                <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-red-500 rounded-full" style="width: 100%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-[11px] font-mono text-cobalt font-bold mb-1">
+                  <span>Licencia Institucional KINETIA 3D Cloud</span>
+                  <span id="eduBarCloudLbl">14.400 €</span>
+                </div>
+                <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                  <div id="eduBarCloud" class="h-full bg-cobalt rounded-full transition-all duration-300" style="width: 4%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
+            <p class="text-xs text-muted">Incluye panel docente para evaluación automática y prácticas en hogar 24/7.</p>
+            <button onclick="openModalWithCalculation()" class="px-5 py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-ink hover:bg-slate-800 transition-colors cursor-pointer shrink-0">
+              Solicitar Piloto para Centro Educativo →
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- FOOTER MINIMALISTA Y LIMPIO                                           -->
+  <!-- ===================================================================== -->
+  <footer class="bg-white border-t border-borderLight mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted">
+      <div class="flex items-center gap-2">
+        <span class="font-display font-bold text-ink">KINETIA</span>
+        <span>· Industrial AI &amp; Automation Academy</span>
+        <span class="hidden md:inline text-slate-300">|</span>
+        <span class="hidden md:inline font-mono text-[11px]">Trabajo de Fin de Grado en ADE · Universitat de Barcelona</span>
+      </div>
+      <div class="flex items-center gap-4 font-mono text-[11px]">
+        <button onclick="navigateTo('inicio')" class="hover:text-cobalt cursor-pointer">Inicio</button>
+        <button onclick="navigateTo('catalogo')" class="hover:text-cobalt cursor-pointer">Catálogo</button>
+        <button onclick="navigateTo('simuladores')" class="hover:text-cobalt cursor-pointer">Simuladores</button>
+        <button onclick="navigateTo('calculadora')" class="hover:text-cobalt cursor-pointer">ROI</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- DRAWER / MODAL 1: TEMARIO TÉCNICO Y PRÁCTICA 3D DEL CURSO             -->
+  <!-- ===================================================================== -->
+  <div id="courseDrawerBackdrop" class="fixed inset-0 z-50 hidden bg-ink/40 backdrop-blur-xs justify-end">
+    <div class="bg-white w-full max-w-xl h-full overflow-y-auto shadow-2xl border-l border-borderLight p-6 sm:p-8 flex flex-col justify-between">
+      <div class="space-y-6">
+        <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2 mb-1.5">
+              <span id="drwLevel" class="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold bg-cobaltTint text-cobalt">Upskilling</span>
+              <span id="drwArea" class="text-xs font-mono text-tealMetric font-semibold">Visión Artificial</span>
+            </div>
+            <h3 id="drwTitle" class="font-display text-xl sm:text-2xl font-bold text-ink leading-snug">Título del Programa</h3>
+          </div>
+          <button onclick="closeCourseDrawer()" aria-label="Cerrar panel" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-ink cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 p-3.5 rounded-xl bg-porcelain border border-borderLight text-center">
+          <div>
+            <div class="text-[10px] font-mono text-muted uppercase">Duración</div>
+            <div id="drwHours" class="text-sm font-bold text-ink mt-0.5">60 horas</div>
+          </div>
+          <div class="border-x border-slate-200">
+            <div class="text-[10px] font-mono text-muted uppercase">Gemelo 3D</div>
+            <div id="drwSimTag" class="text-xs font-bold text-tealMetric mt-0.5">Incluido 24/7</div>
+          </div>
+          <div>
+            <div class="text-[10px] font-mono text-muted uppercase">Certificación</div>
+            <div class="text-xs font-bold text-cobalt mt-0.5">KINETIA OEM</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="text-[11px] font-mono uppercase text-muted mb-2">Ecosistemas Tecnológicos Cubiertos</div>
+          <div id="drwOems" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <div>
+          <div class="text-[11px] font-mono uppercase text-muted mb-1.5">Descripción y Competencias</div>
+          <p id="drwDesc" class="text-xs sm:text-sm text-muted leading-relaxed"></p>
+        </div>
+
+        <div>
+          <div class="text-[11px] font-mono uppercase text-muted mb-2">Estructura Modular</div>
+          <div id="drwModules" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <div class="pt-6 mt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
+        <button id="drwPracticeBtn" class="flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-cobalt bg-cobaltTint hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer">
+          Practicar en Simulador 3D
+        </button>
+        <button id="drwEnrollBtn" class="flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-cobalt hover:bg-cobaltHover transition-colors cursor-pointer">
+          Solicitar Información / Acceso
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: SOLICITUD CONTEXTUAL SEGÚN SEGMENTO ACTIVO                   -->
+  <!-- ===================================================================== -->
+  <div id="contextualModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-ink/45 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl border border-borderLight max-w-lg w-full overflow-hidden shadow-2xl">
+      <div class="px-6 py-5 bg-porcelain border-b border-borderLight flex items-start justify-between gap-4">
+        <div>
+          <span id="ctxModalBadge" class="text-[11px] font-mono font-bold uppercase text-cobalt">PERFIL: EMPRESAS INDUSTRIALES (B2B)</span>
+          <h3 id="ctxModalTitle" class="font-display text-xl font-bold text-ink mt-0.5">Solicitar Propuesta B2B y Estudio FUNDAE</h3>
+        </div>
+        <button onclick="closeContextualModal()" aria-label="Cerrar modal" class="p-2 rounded-xl bg-white border border-borderLight text-muted hover:text-ink cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="ctxLeadForm" onsubmit="submitContextualForm(event)" class="p-6 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label for="ctxName" class="block text-xs font-bold text-ink mb-1">Nombre y apellidos *</label>
+            <input id="ctxName" type="text" required placeholder="Ej. Laura Puig" class="w-full px-3.5 py-2.5 rounded-xl bg-porcelain border border-borderLight text-sm text-ink focus:outline-none focus:ring-2 focus:ring-cobalt" />
+          </div>
+          <div>
+            <label id="ctxOrgLabel" for="ctxOrg" class="block text-xs font-bold text-ink mb-1">Empresa Industrial *</label>
+            <input id="ctxOrg" type="text" required placeholder="Ej. Mecánica Industrial S.A." class="w-full px-3.5 py-2.5 rounded-xl bg-porcelain border border-borderLight text-sm text-ink focus:outline-none focus:ring-2 focus:ring-cobalt" />
+          </div>
+        </div>
+
+        <div>
+          <label for="ctxEmail" class="block text-xs font-bold text-ink mb-1">Correo electrónico profesional *</label>
+          <input id="ctxEmail" type="email" required placeholder="nombre@organizacion.es" class="w-full px-3.5 py-2.5 rounded-xl bg-porcelain border border-borderLight text-sm text-ink focus:outline-none focus:ring-2 focus:ring-cobalt" />
+        </div>
+
+        <div>
+          <label for="ctxNotes" class="block text-xs font-bold text-ink mb-1">Resumen de solicitud / Simulación adjunta</label>
+          <textarea id="ctxNotes" rows="3" class="w-full px-3.5 py-2 rounded-xl bg-porcelain border border-borderLight text-xs font-mono text-ink focus:outline-none focus:ring-2 focus:ring-cobalt" placeholder="Indica tus necesidades de capacitación técnica..."></textarea>
+        </div>
+
+        <p id="ctxFormErr" class="hidden text-xs font-bold text-red-600"></p>
+
+        <div class="pt-2 flex items-center justify-end gap-2.5">
+          <button type="button" onclick="closeContextualModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-muted hover:text-ink cursor-pointer">Cancelar</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-cobalt hover:bg-cobaltHover transition-colors cursor-pointer">Confirmar Solicitud</button>
+        </div>
+      </form>
+
+      <div id="ctxSuccessView" class="hidden p-8 text-center space-y-4">
+        <div class="w-12 h-12 rounded-2xl bg-tealTint border border-teal-200 text-tealMetric flex items-center justify-center mx-auto">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div>
+          <span id="ctxRefCode" class="font-mono text-xs px-2.5 py-0.5 rounded bg-slate-100 text-cobalt font-bold">REF #KNT-2026</span>
+          <h4 class="font-display text-xl font-bold text-ink mt-2">Solicitud registrada correctamente</h4>
+          <p class="text-xs sm:text-sm text-muted mt-1">
+            Hemos preparado tu acceso de demostración a KINETIA y el informe personalizado para tu perfil.
+          </p>
+        </div>
+        <button onclick="closeContextualModal()" class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-ink hover:bg-slate-800 cursor-pointer">
+          Volver a la plataforma
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT: ROUTER MULTI-INTERFAZ, SEGMENTOS, CATÁLOGO Y THREE.JS 3D  -->
+  <!-- ===================================================================== -->
+  <script>
+    // =========================================================================
+    // 1. FALLBACK SVG ILUSTRADO DE ALTA CALIDAD PARA IMÁGENES DE SEGMENTO
+    // =========================================================================
+    function handleImageFallback(imgEl, segKey) {
+      imgEl.onerror = null;
+      const palettes = {
+        b2b: { bg: '#EFF6FF', primary: '#1D4ED8', accent: '#0D9488', label: 'PLANTA INTELIGENTE B2B' },
+        b2c: { bg: '#F0FDFA', primary: '#0D9488', accent: '#1D4ED8', label: 'INGENIERÍA & UPSKILLING B2C' },
+        edu: { bg: '#F1F5F9', primary: '#0F172A', accent: '#1D4ED8', label: 'LABORATORIO VIRTUAL 3D' }
+      };
+      const p = palettes[segKey] || palettes.b2b;
+      const svgString = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" width="800" height="420">
+          <rect width="800" height="420" fill="${p.bg}" />
+          <g stroke="#CBD5E1" stroke-width="1" opacity="0.55">
+            <line x1="0" y1="80" x2="800" y2="80" />
+            <line x1="0" y1="160" x2="800" y2="160" />
+            <line x1="0" y1="240" x2="800" y2="240" />
+            <line x1="0" y1="320" x2="800" y2="320" />
+            <line x1="160" y1="0" x2="160" y2="420" />
+            <line x1="320" y1="0" x2="320" y2="420" />
+            <line x1="480" y1="0" x2="480" y2="420" />
+            <line x1="640" y1="0" x2="640" y2="420" />
+          </g>
+          <rect x="140" y="255" width="520" height="36" rx="18" fill="#0F172A" />
+          <circle cx="200" cy="273" r="8" fill="${p.accent}" />
+          <circle cx="400" cy="273" r="8" fill="${p.accent}" />
+          <circle cx="600" cy="273" r="8" fill="${p.accent}" />
+          <path d="M270 255 L270 155 L340 105 L430 135" fill="none" stroke="${p.primary}" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="270" cy="155" r="14" fill="#FFFFFF" stroke="${p.primary}" stroke-width="6" />
+          <circle cx="340" cy="105" r="12" fill="#FFFFFF" stroke="${p.accent}" stroke-width="6" />
+          <polygon points="510,95 570,95 600,245 480,245" fill="${p.accent}" opacity="0.18" />
+          <rect x="515" y="72" width="50" height="26" rx="6" fill="#0F172A" />
+          <text x="400" y="365" text-anchor="middle" font-family="monospace" font-size="16" font-weight="bold" fill="${p.primary}">${p.label}</text>
+        </svg>
+      `;
+      imgEl.src = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svgString.trim());
+    }
+
+    // =========================================================================
+    // 2. DATOS DE LOS 3 PERFILES DE NEGOCIO (B2B, B2C, ACADÉMICO)
+    // =========================================================================
+    const SEGMENTS_DATA = {
+      b2b: {
+        shortLabel: 'Empresa B2B',
+        fullName: 'Empresas Industriales (B2B)',
+        badge: 'SOLUCIÓN CORPORATIVA B2B · BONIFICABLE FUNDAE + UE',
+        headline: 'Acelera la transformación hacia la IA y Automatización en tu plantilla sin detener la planta.',
+        desc: 'Capacita a tus equipos de mantenimiento e ingeniería en mantenimiento predictivo con Machine Learning, visión artificial y cobots multimarca mediante gemelos digitales 3D en la nube.',
+        image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1000&q=80',
+        overlayTag: 'SOLUCIÓN CORPORATIVA B2B',
+        overlayCaption: 'Entrenamiento práctico en Siemens, ABB, Fanuc, Festo, UR y Schneider con 0 horas de parada de línea.',
+        pains: [
+          'Reducción del 45% en tiempos medios de reparación (MTTR)',
+          'Cero riesgo de colisión o daño sobre maquinaria productiva',
+          'Gestión integral de créditos FUNDAE y subvenciones UE',
+          'Informes de competencias por técnico y planta'
+        ],
+        metrics: [
+          { val: '-45%', lbl: 'Paradas no planificadas', color: 'text-tealMetric' },
+          { val: '100%', lbl: 'Bonificable FUNDAE', color: 'text-cobalt' },
+          { val: '0 hrs', lbl: 'Parada de línea', color: 'text-ink' }
+        ],
+        ctaText: 'Calcular Crédito FUNDAE y ROI →',
+        ctaAction: () => navigateTo('calculadora'),
+        pillars: [
+          { num: '01', title: 'Diagnóstico de Brecha IA + OT', text: 'Evaluamos el nivel actual de tus técnicos en PLC, robótica y analítica predictiva para asignar itinerarios personalizados.' },
+          { num: '02', title: 'Práctica en Gemelos Digitales 3D', text: 'Tus equipos resuelven fallos reales de visión artificial y servomotores en células 3D antes de intervenir en línea.' },
+          { num: '03', title: 'Gestión Llave en Mano FUNDAE / UE', text: 'Nos encargamos de toda la tramitación administrativa para maximizar la bonificación en seguros sociales.' }
+        ],
+        recTitle: 'Programas Recomendados para Empresas Industriales',
+        modalBadge: 'PERFIL: EMPRESAS INDUSTRIALES (B2B)',
+        modalTitle: 'Solicitar Propuesta B2B y Estudio FUNDAE',
+        modalOrgLabel: 'Empresa Industrial *',
+        modalOrgPlaceholder: 'Ej. Componentes Automoción S.A.'
+      },
+      b2c: {
+        shortLabel: 'Profesional B2C',
+        fullName: 'Profesionales y Técnicos (B2C)',
+        badge: 'ACELERADORA DE CARRERA B2C · UPSKILLING & RESKILLING',
+        headline: 'Domina la IA Industrial, Visión Artificial y Robótica 3D y multiplica tu empleabilidad.',
+        desc: 'Da el salto de operario o técnico tradicional a especialista en automatización inteligente. Practica 24/7 en simuladores 3D multimarca desde tu navegador sin pagar licencias OEM.',
+        image: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=1000&q=80',
+        overlayTag: 'RUTA DE CARRERA B2C',
+        overlayCaption: 'Portfolio verificable de resoluciones en gemelo digital 3D + certificación técnica multimarca.',
+        pains: [
+          'Acceso ilimitado 24/7 a simuladores 3D desde cualquier PC',
+          'Ahorro del 100% en licencias de software industrial',
+          'Certificación práctica valorada por empresas líderes',
+          'Conexión directa con ofertas de empleo técnico 4.0'
+        ],
+        metrics: [
+          { val: '+24%', lbl: 'Incremento salarial medio', color: 'text-tealMetric' },
+          { val: '24/7', lbl: 'Acceso Cloud 3D', color: 'text-cobalt' },
+          { val: '0 €', lbl: 'Coste licencias OEM', color: 'text-ink' }
+        ],
+        ctaText: 'Simular Inversión y Mejora Salarial →',
+        ctaAction: () => navigateTo('calculadora'),
+        pillars: [
+          { num: '01', title: 'Aprendizaje 100% Práctico en 3D', text: 'Olvida la teoría pasiva: calibra modelos de visión CNN, ajusta trayectorias de cobots y depura lógica PLC en vivo.' },
+          { num: '02', title: 'Certificación Multimarca OEM', text: 'Acredita competencias transversales en los 6 ecosistemas más demandados por la industria europea.' },
+          { num: '03', title: 'Conexión con Empresas Contratantes', text: 'Comparte tus métricas de diagnóstico y resolución de averías con empresas B2B que buscan talento verificado.' }
+        ],
+        recTitle: 'Itinerarios de Upskilling y Reskilling para Profesionales',
+        modalBadge: 'PERFIL: PROFESIONALES Y TÉCNICOS (B2C)',
+        modalTitle: 'Reservar Plaza Individual y Prueba 3D',
+        modalOrgLabel: 'Puesto Actual / Especialidad *',
+        modalOrgPlaceholder: 'Ej. Técnico Mantenimiento / Operario'
+      },
+      edu: {
+        shortLabel: 'FP / Universidad',
+        fullName: 'Centros de FP y Universidades (Académico)',
+        badge: 'SOLUCIÓN ACADÉMICA · AULAS VIRTUALES 3D MULTIMARCA',
+        headline: 'Equipa tus aulas de FP e Ingeniería con Gemelos Digitales 3D sin inversiones millonarias en hardware.',
+        desc: 'Despliega laboratorios virtuales de robótica, visión artificial y PLCs en el navegador de cada alumno. Prácticas seguras 24/7 sin cuellos de botella ni desgaste mecánico.',
+        image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=1000&q=80',
+        overlayTag: 'INFRAESTRUCTURA DOCENTE 3D',
+        overlayCaption: '1 célula robotizada con IA por alumno, panel de evaluación docente e inyección automática de averías.',
+        pains: [
+          'Ahorro superior al 88% frente a compra de hardware físico',
+          '1 puesto virtual dedicado por estudiante sin esperas',
+          'Cero riesgo de colisiones o roturas en taller',
+          'Alineado con currículos oficiales de Industria 4.0'
+        ],
+        metrics: [
+          { val: '>88%', lbl: 'Ahorro CapEx aula', color: 'text-tealMetric' },
+          { val: '1:1', lbl: 'Puesto 3D por alumno', color: 'text-cobalt' },
+          { val: '6 OEM', lbl: 'En una única licencia', color: 'text-ink' }
+        ],
+        ctaText: 'Calcular Ahorro CapEx para mi Centro →',
+        ctaAction: () => navigateTo('calculadora'),
+        pillars: [
+          { num: '01', title: 'Sustitución Inteligente de CapEx', text: 'Multiplica la capacidad práctica de tus talleres sin asumir costes prohibitivos de adquisición y mantenimiento.' },
+          { num: '02', title: 'Panel Docente e Inyección de Fallos', text: 'El profesor asigna escenarios de avería distintos a cada alumno y evalúa automáticamente el tiempo de diagnóstico.' },
+          { num: '03', title: 'Continuidad Aula-Hogar en Navegador', text: 'Los estudiantes continúan sus prácticas de programación y visión IA desde casa sin instalar software pesado.' }
+        ],
+        recTitle: 'Módulos Recomendados para Ciclos de FP e Ingeniería',
+        modalBadge: 'PERFIL: CENTROS DE FP Y UNIVERSIDADES',
+        modalTitle: 'Solicitar Piloto Académico y Licencia de Aula',
+        modalOrgLabel: 'Centro Educativo / Universidad *',
+        modalOrgPlaceholder: 'Ej. Institut Politècnic / Escuela Ingeniería'
+      }
+    };
+
+    // =========================================================================
+    // 3. CATÁLOGO DE 8 CURSOS ESPECIALIZADOS EN IA + AUTOMATIZACIÓN
+    // =========================================================================
+    const COURSES_CATALOG = [
+      {
+        id: 'knt-01',
+        title: 'Visión Artificial y Control de Calidad Cero Defectos con Deep Learning',
+        area: 'Visión Artificial',
+        level: 'Upskilling',
+        hours: 55,
+        oems: ['Fanuc', 'Siemens'],
+        segments: ['b2b', 'b2c', 'edu'],
+        simScenario: 'vision',
+        desc: 'Entrena redes neuronales convolucionales (CNN) para detectar microdefectos en tiempo real e integrar señales de rechazo con autómatas y robots.',
+        modules: [
+          'Captura óptica industrial, iluminación estructurada y etiquetado de datasets.',
+          'Entrenamiento de modelos CNN de clasificación y segmentación de anomalías.',
+          'Comunicación de coordenadas y disparo de rechazo hacia Fanuc y Siemens.',
+          'Práctica 3D: Calibración de umbral de confianza para eliminar falsos rechazos.'
+        ]
+      },
+      {
+        id: 'knt-02',
+        title: 'Mantenimiento Predictivo Industrial con Machine Learning y Edge AI',
+        area: 'IA Predictiva & Edge',
+        level: 'Upskilling',
+        hours: 60,
+        oems: ['Siemens', 'Schneider Electric'],
+        segments: ['b2b', 'b2c', 'edu'],
+        simScenario: 'predictive',
+        desc: 'Implementa algoritmos de análisis espectral FFT y detección temprana de fallos en servomotores y reductores mediante nodos Edge AI.',
+        modules: [
+          'Adquisición IIoT de vibración triaxial, consumo eléctrico y deriva térmica.',
+          'Modelos predictivos de vida útil remanente (RUL) ejecutados en Edge.',
+          'Integración OPC-UA / MQTT con cuadros de mando OEE en tiempo real.',
+          'Práctica 3D: Diagnóstico espectral de fallo incipiente en eje de Cobot.'
+        ]
+      },
+      {
+        id: 'knt-03',
+        title: 'Robótica Colaborativa (Cobots) y Trayectorias Adaptativas con IA',
+        area: 'Robótica Colaborativa',
+        level: 'Upskilling',
+        hours: 70,
+        oems: ['Universal Robots', 'ABB'],
+        segments: ['b2b', 'b2c', 'edu'],
+        simScenario: 'cycle',
+        desc: 'Programa células colaborativas de 6 ejes capaces de adaptar trayectorias y velocidad según detección sensorial y seguridad ISO/TS 15066.',
+        modules: [
+          'Cinemática directa/inversa de 6 ejes y parametrización de zonas colaborativas.',
+          'Programación en PolyScope (UR) y RobotStudio (ABB) asistida por IA.',
+          'Sincronización dinámica de pick & place sobre cinta transportadora en movimiento.',
+          'Práctica 3D: Optimización de tiempo de ciclo y rearme seguro tras parada.'
+        ]
+      },
+      {
+        id: 'knt-04',
+        title: 'Programación Avanzada de PLCs e Integración de Copilotos de IA',
+        area: 'PLC & Automatización',
+        level: 'Upskilling',
+        hours: 65,
+        oems: ['Siemens', 'Schneider Electric'],
+        segments: ['b2b', 'b2c', 'edu'],
+        simScenario: 'cycle',
+        desc: 'Domina el desarrollo estructurado IEC 61131-3 (SCL) y acelera la generación y depuración de lógica de control mediante asistentes de IA industrial.',
+        modules: [
+          'Arquitectura modular en TIA Portal y EcoStruxure con bloques funcionales.',
+          'Uso seguro de IA Generativa para diagnóstico de alarmas y bloques SCL.',
+          'Redes PROFINET, IO-Link y pasarelas de datos hacia servidores Edge AI.',
+          'Práctica 3D: Validación de secuencia automática antes de descarga a planta.'
+        ]
+      },
+      {
+        id: 'knt-05',
+        title: 'Gemelos Digitales (Digital Twins) y Puesta en Marcha Virtual 3D',
+        area: 'Gemelos Digitales',
+        level: 'Upskilling',
+        hours: 75,
+        oems: ['Siemens', 'Festo'],
+        segments: ['b2b', 'edu'],
+        simScenario: 'cycle',
+        desc: 'Diseña, conecta y valida células automatizadas completas en entorno virtual 3D (SIL/HIL) reduciendo hasta un 60% el tiempo de commissioning en taller.',
+        modules: [
+          'Modelado cinemático 3D de transportadores, sensores ópticos y actuadores.',
+          'Conexión Software-in-the-Loop con autómatas virtuales y modelos de IA.',
+          'Simulación de cuellos de botella y validación ergonómica/seguridad.',
+          'Práctica 3D: Puesta en marcha integral de célula híbrida de inspección.'
+        ]
+      },
+      {
+        id: 'knt-06',
+        title: 'Reskilling: De Operario de Línea a Técnico de Células Automatizadas con IA',
+        area: 'PLC & Automatización',
+        level: 'Reskilling',
+        hours: 90,
+        oems: ['Siemens', 'Universal Robots', 'Festo'],
+        segments: ['b2b', 'b2c'],
+        simScenario: 'vision',
+        desc: 'Itinerario completo de reconversión profesional para operarios de producción que buscan asumir funciones técnicas de supervisión y rearme 4.0.',
+        modules: [
+          'Fundamentos de sensórica inteligente, neumática proporcional e IO-Link.',
+          'Lectura de paneles HMI, interpretación de alertas de visión IA y OEE.',
+          'Protocolos paso a paso de diagnóstico y rearme seguro de Cobots.',
+          'Práctica 3D: Resolución guiada de las incidencias más frecuentes en línea.'
+        ]
+      },
+      {
+        id: 'knt-07',
+        title: 'Arquitecturas IIoT, Edge Computing y Ciberseguridad OT (IEC 62443)',
+        area: 'IA Predictiva & Edge',
+        level: 'Upskilling',
+        hours: 50,
+        oems: ['Schneider Electric', 'Siemens'],
+        segments: ['b2b', 'b2c', 'edu'],
+        simScenario: 'predictive',
+        desc: 'Conecta activos industriales heterogéneos con plataformas de IA protegiendo autómatas y modelos Edge frente a amenazas cibernéticas.',
+        modules: [
+          'Convergencia IT/OT, brokers MQTT seguros y servidores OPC-UA.',
+          'Segmentación de redes de planta y detección de tráfico anómalo con IA.',
+          'Protección de integridad de modelos Machine Learning en el borde.',
+          'Práctica 3D: Aislamiento y recuperación de nodo Edge ante anomalía.'
+        ]
+      },
+      {
+        id: 'knt-08',
+        title: 'Automatización Electroneumática Inteligente y Eficiencia Energética',
+        area: 'PLC & Automatización',
+        level: 'Upskilling',
+        hours: 45,
+        oems: ['Festo'],
+        segments: ['b2b', 'b2c', 'edu'],
+        simScenario: 'predictive',
+        desc: 'Optimiza el consumo energético de actuadores y detecta fugas de aire comprimido en tiempo real mediante válvulas digitalizadas y analítica IA.',
+        modules: [
+          'Neumática digitalizada (Motion Terminal) y control proporcional por software.',
+          'Monitorización de caudal y detección predictiva de fugas con IA.',
+          'Integración IO-Link con cuadros de mando de sostenibilidad industrial.',
+          'Práctica 3D: Ajuste de ciclo eficiente y reducción de consumo energético.'
+        ]
+      }
+    ];
+
+    // Estado global de la SPA
+    let activeView = 'inicio';
+    let activeSegment = 'b2b';
+    let catProfileFilter = 'b2b';
+    let catAreaFilter = 'all';
+    let currentCalcSummary = '';
+
+    // =========================================================================
+    // 4. ROUTER MULTI-INTERFAZ (CAMBIO INSTANTÁNEO ENTRE LAS 5 VISTAS)
+    // =========================================================================
+    function navigateTo(viewId) {
+      const views = ['inicio', 'soluciones', 'catalogo', 'simuladores', 'visor', 'simulador', 'calculadora'];
+      if (!views.includes(viewId)) return;
+      const prevView = activeView;
+      activeView = viewId;
+
+      views.forEach(v => {
+        document.getElementById(`view-${v}`).classList.toggle('hidden', v !== viewId);
+      });
+
+      // Pestañas: el visor y el Simulador 3D cuelgan de la pestaña "Simuladores"
+      const activeTab = (viewId === 'visor' || viewId === 'simulador') ? 'simuladores' : viewId;
+      ['inicio', 'soluciones', 'catalogo', 'simuladores', 'calculadora'].forEach(t => {
+        const tab = document.getElementById(`navTab-${t}`);
+        if (!tab) return;
+        tab.className = (t === activeTab)
+          ? 'nav-tab px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-cobalt shadow-xs transition-all cursor-pointer'
+          : 'nav-tab px-3.5 py-1.5 rounded-lg text-xs font-semibold text-muted hover:text-ink transition-all cursor-pointer';
+      });
+
+      // Al salir del visor, se descarga el simulador para liberar CPU/GPU
+      if (prevView === 'visor' && viewId !== 'visor') {
+        const frame = document.getElementById('visorFrame');
+        if (frame) frame.src = 'about:blank';
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Si entramos al Simulador 3D, aseguramos el dimensionado correcto del renderer Three.js
+      if (viewId === 'simulador') {
+        requestAnimationFrame(() => {
+          resizeThreeRenderer();
+        });
+      }
+    }
+
+    // =========================================================================
+    // SIMULADORES EXTERNOS (PlantSim 3D, FluidLab Studio, RoboTwin 3D)
+    // Los HTML deben estar en la misma carpeta que Kinetia_Platform.html
+    // =========================================================================
+    const SIMULATORS = {
+      io:    { file: 'KinetiaIO.html',       name: 'PlantSim 3D' },
+      fluid: { file: 'KinetiaFluid.html',    name: 'FluidLab Studio' },
+      robot: { file: 'KinetiaRobotwin.html', name: 'RoboTwin 3D' }
+    };
+
+    function openSimulator(key) {
+      const sim = SIMULATORS[key];
+      if (!sim) return;
+      const frame = document.getElementById('visorFrame');
+      const loader = document.getElementById('visorLoader');
+      loader.classList.remove('hidden');
+      frame.onload = () => loader.classList.add('hidden');
+      frame.title = `Simulador ${sim.name}`;
+      frame.src = sim.file;
+      document.getElementById('visorExternal').href = sim.file;
+      Object.keys(SIMULATORS).forEach(k => {
+        document.getElementById(`visorTab-${k}`).className = (k === key)
+          ? 'px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap bg-white text-cobalt shadow-xs cursor-pointer'
+          : 'px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap text-muted hover:text-ink cursor-pointer';
+      });
+      navigateTo('visor');
+    }
+
+    function goToSegmentSolution(segKey) {
+      setSegment(segKey);
+      navigateTo('soluciones');
+    }
+
+    function toggleMobileMenu() {
+      document.getElementById('mobileMenuPanel').classList.toggle('hidden');
+    }
+
+    // =========================================================================
+    // 5. SINCRONIZACIÓN DE PERFIL ACTIVO EN TODAS LAS INTERFACES
+    // =========================================================================
+    function setSegment(segKey) {
+      if (!SEGMENTS_DATA[segKey]) return;
+      activeSegment = segKey;
+      const data = SEGMENTS_DATA[segKey];
+
+      // Sincronizar selector rápido del header
+      const headerSel = document.getElementById('globalProfileSelect');
+      if (headerSel) headerSel.value = segKey;
+
+      // Sincronizar botones móviles
+      ['b2b', 'b2c', 'edu'].forEach(k => {
+        const mobBtn = document.getElementById(`mobProf-${k}`);
+        if (mobBtn) {
+          mobBtn.className = k === segKey
+            ? 'px-2.5 py-1 rounded-lg text-xs font-bold border border-cobalt bg-cobalt text-white transition-all'
+            : 'px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-white text-muted transition-all';
+        }
+
+        // Pestañas de Interfaz 2 (Soluciones por Perfil)
+        const solTab = document.getElementById(`solTab-${k}`);
+        if (solTab) {
+          solTab.className = k === segKey
+            ? 'sol-tab py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-cobalt text-white shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2'
+            : 'sol-tab py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold text-muted hover:text-ink hover:bg-slate-50 transition-all cursor-pointer flex items-center justify-center gap-2';
+        }
+
+        // Botones de Interfaz 5 (Calculadora ROI)
+        const calcBtn = document.getElementById(`calcModeBtn-${k}`);
+        if (calcBtn) {
+          calcBtn.className = k === segKey
+            ? 'calc-mode-btn px-3.5 py-2 rounded-lg text-xs font-bold bg-cobalt text-white shadow-xs transition-all cursor-pointer'
+            : 'calc-mode-btn px-3.5 py-2 rounded-lg text-xs font-semibold text-muted hover:text-ink transition-all cursor-pointer';
+        }
+      });
+
+      // Actualizar Interfaz 2: Soluciones por Perfil
+      document.getElementById('solBadge').textContent = data.badge;
+      document.getElementById('solHeadline').textContent = data.headline;
+      document.getElementById('solDesc').textContent = data.desc;
+
+      const solImg = document.getElementById('solHeroImage');
+      solImg.onerror = () => handleImageFallback(solImg, segKey);
+      solImg.src = data.image;
+
+      document.getElementById('solOverlayTag').textContent = data.overlayTag;
+      document.getElementById('solOverlayCaption').textContent = data.overlayCaption;
+
+      document.getElementById('solPainPoints').innerHTML = data.pains.map(p => `
+        <div class="flex items-start gap-2 text-xs sm:text-sm text-ink bg-porcelain p-2.5 rounded-xl border border-slate-100">
+          <span class="text-tealMetric font-bold mt-0.5">✓</span>
+          <span>${p}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('solMetrics').innerHTML = data.metrics.map(m => `
+        <div>
+          <div class="font-mono text-xl sm:text-2xl font-bold ${m.color}">${m.val}</div>
+          <div class="text-[11px] text-muted mt-0.5">${m.lbl}</div>
+        </div>
+      `).join('');
+
+      const primaryCtaBtn = document.getElementById('solPrimaryCta');
+      primaryCtaBtn.textContent = data.ctaText;
+      primaryCtaBtn.onclick = data.ctaAction;
+
+      document.getElementById('solPillarsGrid').innerHTML = data.pillars.map(pl => `
+        <div class="bg-white rounded-2xl border border-borderLight p-5 shadow-card space-y-2.5">
+          <span class="inline-block font-mono text-xs font-bold px-2.5 py-0.5 rounded-md bg-cobaltTint text-cobalt">PILAR ${pl.num}</span>
+          <h4 class="font-display text-base font-bold text-ink">${pl.title}</h4>
+          <p class="text-xs sm:text-sm text-muted leading-relaxed">${pl.text}</p>
+        </div>
+      `).join('');
+
+      document.getElementById('solRecTitle').textContent = data.recTitle;
+      const recCourses = COURSES_CATALOG.filter(c => c.segments.includes(segKey)).slice(0, 3);
+      document.getElementById('solRecCoursesGrid').innerHTML = recCourses.map(c => `
+        <div class="p-4 rounded-xl bg-porcelain border border-borderLight hover:border-cobalt/40 transition-all flex flex-col justify-between gap-3">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-1.5">
+              <span class="text-cobalt font-bold">${c.area}</span>
+              <span class="text-muted">${c.hours}h</span>
+            </div>
+            <h5 class="text-xs sm:text-sm font-bold text-ink leading-snug">${c.title}</h5>
+          </div>
+          <button onclick="openCourseDrawer('${c.id}')" class="text-left text-xs font-bold text-cobalt hover:underline cursor-pointer">
+            Ver programa y práctica 3D →
+          </button>
+        </div>
+      `).join('');
+
+      // Sincronizar filtro de perfil del Catálogo (Interfaz 3)
+      catProfileFilter = segKey;
+      updateCatalogFilterPills();
+      renderCatalog();
+
+      // Sincronizar Calculadora ROI (Interfaz 5)
+      const calcTitles = {
+        b2b: { tag: 'SIMULADOR FINANCIERO B2B · FUNDAE + ROI', title: 'Calculadora de Bonificación FUNDAE y Retorno Operativo (ROI)' },
+        b2c: { tag: 'SIMULADOR DE CARRERA B2C · UPSKILLING', title: 'Simulador de Retorno Profesional e Incremento Salarial' },
+        edu: { tag: 'SIMULADOR ACADÉMICO · AHORRO CAPEX AULAS', title: 'Comparativa CapEx: Hardware Físico vs. Aulas Virtuales 3D' }
+      };
+      document.getElementById('calcTag').textContent = calcTitles[segKey].tag;
+      document.getElementById('calcTitle').textContent = calcTitles[segKey].title;
+
+      ['b2b', 'b2c', 'edu'].forEach(k => {
+        const panel = document.getElementById(`calcBody-${k}`);
+        if (k === segKey) {
+          panel.classList.remove('hidden');
+          panel.classList.add('grid');
+        } else {
+          panel.classList.add('hidden');
+          panel.classList.remove('grid');
+        }
+      });
+
+      if (segKey === 'b2b') updateB2BCalc();
+      if (segKey === 'b2c') updateB2CCalc();
+      if (segKey === 'edu') updateEduCalc();
+    }
+
+    // =========================================================================
+    // 6. INTERFAZ 3: CATÁLOGO TÉCNICO MULTIMARCA & DRAWER
+    // =========================================================================
+    function setCatalogProfileFilter(prof) {
+      catProfileFilter = prof;
+      updateCatalogFilterPills();
+      renderCatalog();
+    }
+
+    function setCatalogAreaFilter(area) {
+      catAreaFilter = area;
+      document.querySelectorAll('.cat-area-pill').forEach(btn => {
+        const isMatch = btn.getAttribute('data-area') === area;
+        btn.className = isMatch
+          ? 'cat-area-pill px-3 py-1.5 rounded-lg text-xs font-bold bg-cobalt text-white transition-all cursor-pointer'
+          : 'cat-area-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-muted hover:text-ink transition-all cursor-pointer';
+      });
+      renderCatalog();
+    }
+
+    function updateCatalogFilterPills() {
+      ['all', 'b2b', 'b2c', 'edu'].forEach(p => {
+        const btn = document.getElementById(`catProf-${p}`);
+        if (btn) {
+          btn.className = p === catProfileFilter
+            ? 'cat-prof-pill py-1.5 px-2 rounded-lg text-[11px] font-bold bg-white text-cobalt shadow-xs transition-all cursor-pointer'
+            : 'cat-prof-pill py-1.5 px-2 rounded-lg text-[11px] font-semibold text-muted hover:text-ink transition-all cursor-pointer';
+        }
+      });
+    }
+
+    function renderCatalog() {
+      const query = (document.getElementById('catSearchInput')?.value || '').trim().toLowerCase();
+      const oem = document.getElementById('catOemFilter')?.value || 'all';
+      const grid = document.getElementById('catalogGrid');
+      const empty = document.getElementById('catalogEmptyState');
+      const badge = document.getElementById('catCountBadge');
+
+      const filtered = COURSES_CATALOG.filter(c => {
+        const matchProf = catProfileFilter === 'all' || c.segments.includes(catProfileFilter);
+        const matchArea = catAreaFilter === 'all' || c.area === catAreaFilter;
+        const matchOem = oem === 'all' || c.oems.includes(oem);
+        const matchText = !query ||
+          c.title.toLowerCase().includes(query) ||
+          c.desc.toLowerCase().includes(query) ||
+          c.area.toLowerCase().includes(query) ||
+          c.oems.some(o => o.toLowerCase().includes(query));
+        return matchProf && matchArea && matchOem && matchText;
+      });
+
+      badge.textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      const segMap = { b2b: 'B2B', b2c: 'B2C', edu: 'FP/Uni' };
+
+      grid.innerHTML = filtered.map(c => {
+        const lvlClass = c.level === 'Upskilling'
+          ? 'bg-cobaltTint text-cobalt border-blue-200'
+          : 'bg-amber-50 text-amberAlert border-amber-200';
+
+        return `
+          <article class="bg-white rounded-2xl border border-borderLight hover:border-cobalt/50 p-5 shadow-card hover:shadow-card-hover flex flex-col justify-between transition-all">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <span class="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold border ${lvlClass}">${c.level}</span>
+                <span class="font-mono text-xs font-semibold text-muted">${c.hours} horas</span>
+              </div>
+              <div class="text-[11px] font-mono font-bold text-tealMetric uppercase mb-1">${c.area}</div>
+              <h3 class="font-display text-base sm:text-lg font-bold text-ink leading-snug">${c.title}</h3>
+              <p class="text-xs sm:text-sm text-muted mt-2 leading-relaxed line-clamp-3">${c.desc}</p>
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-slate-100 space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-1.5">
+                <div class="flex flex-wrap gap-1">
+                  ${c.oems.map(o => `<span class="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 text-ink font-medium">${o}</span>`).join('')}
+                </div>
+                <div class="flex gap-1">
+                  ${c.segments.map(s => `<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-tealTint text-tealMetric font-bold">${segMap[s]}</span>`).join('')}
+                </div>
+              </div>
+
+              <button onclick="openCourseDrawer('${c.id}')" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-cobalt bg-cobaltTint hover:bg-cobalt hover:text-white border border-blue-200 hover:border-cobalt transition-all cursor-pointer">
+                Ver Programa y Competencias →
+              </button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function resetCatalogFilters() {
+      document.getElementById('catSearchInput').value = '';
+      document.getElementById('catOemFilter').value = 'all';
+      setCatalogProfileFilter('all');
+      setCatalogAreaFilter('all');
+    }
+
+    // Drawer de Programa Técnico
+    function openCourseDrawer(courseId) {
+      const c = COURSES_CATALOG.find(item => item.id === courseId);
+      if (!c) return;
+
+      document.getElementById('drwLevel').textContent = c.level;
+      document.getElementById('drwArea').textContent = c.area;
+      document.getElementById('drwTitle').textContent = c.title;
+      document.getElementById('drwHours').textContent = `${c.hours} horas`;
+      document.getElementById('drwDesc').textContent = c.desc;
+
+      document.getElementById('drwOems').innerHTML = c.oems.map(o => `
+        <span class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-slate-100 text-ink border border-slate-200">${o}</span>
+      `).join('');
+
+      document.getElementById('drwModules').innerHTML = c.modules.map((m, i) => `
+        <div class="p-3 rounded-xl bg-porcelain border border-borderLight text-xs sm:text-sm text-ink flex items-start gap-2.5">
+          <span class="font-mono font-bold text-cobalt">0${i + 1}</span>
+          <span>${m}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('drwPracticeBtn').onclick = () => {
+        closeCourseDrawer();
+        navigateTo('simulador');
+        selectScenario3D(c.simScenario || 'vision');
+      };
+
+      document.getElementById('drwEnrollBtn').onclick = () => {
+        closeCourseDrawer();
+        openContextualModal(`Programa de interés: ${c.title} (${c.hours}h)`);
+      };
+
+      const backdrop = document.getElementById('courseDrawerBackdrop');
+      backdrop.classList.remove('hidden');
+      backdrop.classList.add('flex');
+    }
+
+    function closeCourseDrawer() {
+      const backdrop = document.getElementById('courseDrawerBackdrop');
+      backdrop.classList.add('hidden');
+      backdrop.classList.remove('flex');
+    }
+
+    // =========================================================================
+    // 7. INTERFAZ 4: SIMULADOR 3D INTERACTIVO EN THREE.JS (GEMELO DIGITAL)
+    // =========================================================================
+    let scene, camera, renderer;
+    let cobotBaseGroup, cobotShoulderGroup, cobotElbowGroup, gripperLeft, gripperRight;
+    let visionConeMesh, stackLightRed, stackLightAmber, stackLightGreen;
+    let conveyorRollers = [];
+    let workpieces = [];
+    let threeInitialized = false;
+
+    // Estado de cámara orbital manual (ratón y táctil)
+    let camOrbit = {
+      theta: 0.65,
+      phi: 0.92,
+      radius: 9.2,
+      target: { x: 0, y: 1.1, z: 0 },
+      isDragging: false,
+      prevX: 0,
+      prevY: 0
+    };
+
+    // Estado lógico del Gemelo Digital 3D
+    const SCENARIOS_3D = {
+      vision: {
+        name: 'Inspección de Calidad con Visión IA (CNN)',
+        faultCode: 'CNN-DRIFT-0x42',
+        faultMsg: 'Desviación lumínica en cámara óptica: confianza CNN cae al 58%, provocando falsos rechazos en cinta.',
+        nomSpeed: 100,
+        nomConf: 94,
+        nomVib: 6.5
+      },
+      predictive: {
+        name: 'Mantenimiento Predictivo en Servo/Cobot',
+        faultCode: 'EDGE-FFT-0x89',
+        faultMsg: 'Armónico de alta frecuencia detectado por Edge ML en articulación 3 del Cobot (+93°C).',
+        nomSpeed: 95,
+        nomConf: 95,
+        nomVib: 7.5
+      },
+      cycle: {
+        name: 'Optimización de Ciclo y Seguridad Colaborativa',
+        faultCode: 'SYNC-OT-0x19',
+        faultMsg: 'Desincronización de trayectoria cinta-Cobot: cuello de botella en estación de clasificación.',
+        nomSpeed: 120,
+        nomConf: 92,
+        nomVib: 6.0
+      }
+    };
+
+    let twinState = {
+      scenario: 'vision',
+      anomaly: false,
+      repairStep: 0, // 0: ok, 1..3: pasos activos
+      oee: 99.2,
+      speedFactor: 1.0,
+      confidence: 94,
+      vibSens: 6.5
+    };
+
+    function initThreeDigitalTwin() {
+      const canvas = document.getElementById('threeDigitalTwinCanvas');
+      const wrapper = document.getElementById('threeCanvasWrapper');
+      if (!canvas || !wrapper || typeof THREE === 'undefined') return;
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xEEF2F6);
+      scene.fog = new THREE.Fog(0xEEF2F6, 16, 32);
+
+      const w = wrapper.clientWidth || 720;
+      const h = wrapper.clientHeight || 380;
+      camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
+      updateCameraPosition();
+
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+      renderer.setSize(w, h);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      // Iluminación arquitectónica limpia de estudio industrial
+      const hemiLight = new THREE.HemisphereLight(0xFFFFFF, 0xCBD5E1, 0.9);
+      hemiLight.position.set(0, 12, 0);
+      scene.add(hemiLight);
+
+      const dirLight = new THREE.DirectionalLight(0xFFFFFF, 0.85);
+      dirLight.position.set(6, 11, 7);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 1024;
+      dirLight.shadow.mapSize.height = 1024;
+      scene.add(dirLight);
+
+      const fillLight = new THREE.DirectionalLight(0x93C5FD, 0.35);
+      fillLight.position.set(-6, 5, -5);
+      scene.add(fillLight);
+
+      // Suelo técnico con cuadrícula arquitectónica
+      const floorGeo = new THREE.PlaneGeometry(32, 32);
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0xE2E8F0, roughness: 0.85 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      const gridHelper = new THREE.GridHelper(24, 24, 0x94A3B8, 0xCBD5E1);
+      gridHelper.position.y = 0.01;
+      scene.add(gridHelper);
+
+      // Materiales compartidos
+      const darkSteelMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, metalness: 0.55, roughness: 0.35 });
+      const silverAlumMat = new THREE.MeshStandardMaterial({ color: 0x94A3B8, metalness: 0.65, roughness: 0.25 });
+      const whiteShellMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, metalness: 0.15, roughness: 0.3 });
+      const cobaltMat = new THREE.MeshStandardMaterial({ color: 0x1D4ED8, metalness: 0.25, roughness: 0.35 });
+
+      // -----------------------------------------------------------------------
+      // A. CINTA TRANSPORTADORA MOTORIZADA
+      // -----------------------------------------------------------------------
+      const convGroup = new THREE.Group();
+      scene.add(convGroup);
+
+      // Estructura chasis cinta
+      const bedGeo = new THREE.BoxGeometry(6.8, 0.22, 1.15);
+      const bedMesh = new THREE.Mesh(bedGeo, darkSteelMat);
+      bedMesh.position.set(0, 0.85, 0);
+      bedMesh.castShadow = true;
+      bedMesh.receiveShadow = true;
+      convGroup.add(bedMesh);
+
+      // Superficie banda transportadora
+      const beltGeo = new THREE.BoxGeometry(6.6, 0.05, 0.96);
+      const beltMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
+      const beltMesh = new THREE.Mesh(beltGeo, beltMat);
+      beltMesh.position.set(0, 0.97, 0);
+      beltMesh.receiveShadow = true;
+      convGroup.add(beltMesh);
+
+      // Patas de soporte
+      const legGeo = new THREE.BoxGeometry(0.14, 0.85, 0.14);
+      [[-2.9, -0.45], [-2.9, 0.45], [0, -0.45], [0, 0.45], [2.9, -0.45], [2.9, 0.45]].forEach(([lx, lz]) => {
+        const leg = new THREE.Mesh(legGeo, silverAlumMat);
+        leg.position.set(lx, 0.425, lz);
+        leg.castShadow = true;
+        convGroup.add(leg);
+      });
+
+      // Rodillos giratorios a lo largo de la cinta
+      const rollerGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.98, 12);
+      rollerGeo.rotateX(Math.PI / 2);
+      for (let rx = -3.1; rx <= 3.1; rx += 0.45) {
+        const roller = new THREE.Mesh(rollerGeo, silverAlumMat);
+        roller.position.set(rx, 0.93, 0);
+        convGroup.add(roller);
+        conveyorRollers.push(roller);
+      }
+
+      // Piezas industriales desplazándose sobre la cinta
+      const pieceColors = [0x1D4ED8, 0x0D9488, 0x2563EB, 0x0F766E];
+      for (let i = 0; i < 4; i++) {
+        const pGroup = new THREE.Group();
+        const box = new THREE.Mesh(
+          new THREE.BoxGeometry(0.36, 0.24, 0.36),
+          new THREE.MeshStandardMaterial({ color: pieceColors[i % pieceColors.length], roughness: 0.3, metalness: 0.2 })
+        );
+        box.castShadow = true;
+        pGroup.add(box);
+
+        // Anillo metálico superior de precisión en la pieza
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.05, 16), silverAlumMat);
+        cap.position.y = 0.14;
+        pGroup.add(cap);
+
+        pGroup.position.set(-2.7 + i * 1.75, 1.12, 0);
+        scene.add(pGroup);
+        workpieces.push(pGroup);
+      }
+
+      // -----------------------------------------------------------------------
+      // B. PÓRTICO DE VISIÓN ARTIFICIAL + CONO VOLUMÉTRICO DE ESCANEO IA
+      // -----------------------------------------------------------------------
+      const gantryGroup = new THREE.Group();
+      gantryGroup.position.set(-1.1, 0, 0);
+      scene.add(gantryGroup);
+
+      const postGeo = new THREE.BoxGeometry(0.12, 2.35, 0.12);
+      const postFront = new THREE.Mesh(postGeo, silverAlumMat);
+      postFront.position.set(0, 1.175, 0.68);
+      postFront.castShadow = true;
+      gantryGroup.add(postFront);
+
+      const postBack = new THREE.Mesh(postGeo, silverAlumMat);
+      postBack.position.set(0, 1.175, -0.68);
+      postBack.castShadow = true;
+      gantryGroup.add(postBack);
+
+      const crossBeam = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.14, 1.48), silverAlumMat);
+      crossBeam.position.set(0, 2.32, 0);
+      gantryGroup.add(crossBeam);
+
+      // Cámara Smart Vision CNN
+      const camBody = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.26, 0.34), darkSteelMat);
+      camBody.position.set(0, 2.15, 0);
+      camBody.castShadow = true;
+      gantryGroup.add(camBody);
+
+      const lensRing = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.1, 16), cobaltMat);
+      lensRing.position.set(0, 1.98, 0);
+      gantryGroup.add(lensRing);
+
+      // Cono volumétrico translúcido de inspección óptica IA
+      const coneGeo = new THREE.ConeGeometry(0.46, 0.96, 24, 1, true);
+      const coneMat = new THREE.MeshBasicMaterial({
+        color: 0x0D9488,
+        transparent: true,
+        opacity: 0.24,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      visionConeMesh = new THREE.Mesh(coneGeo, coneMat);
+      visionConeMesh.position.set(0, 1.48, 0);
+      gantryGroup.add(visionConeMesh);
+
+      // -----------------------------------------------------------------------
+      // C. BRAZO ROBÓTICO COLABORATIVO (COBOT) ARTICULADO DE 6 EJES
+      // -----------------------------------------------------------------------
+      const cobotPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.38, 0.85, 24), darkSteelMat);
+      cobotPedestal.position.set(1.15, 0.425, -1.25);
+      cobotPedestal.castShadow = true;
+      scene.add(cobotPedestal);
+
+      cobotBaseGroup = new THREE.Group();
+      cobotBaseGroup.position.set(1.15, 0.85, -1.25);
+      scene.add(cobotBaseGroup);
+
+      // Base giratoria Eje 1
+      const turret = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.26, 0.24, 24), whiteShellMat);
+      turret.position.y = 0.12;
+      turret.castShadow = true;
+      cobotBaseGroup.add(turret);
+
+      // Hombro Eje 2
+      cobotShoulderGroup = new THREE.Group();
+      cobotShoulderGroup.position.set(0, 0.26, 0);
+      cobotBaseGroup.add(cobotShoulderGroup);
+
+      const shoulderJoint = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.34, 20), cobaltMat);
+      shoulderJoint.rotation.x = Math.PI / 2;
+      cobotShoulderGroup.add(shoulderJoint);
+
+      const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 1.05, 20), whiteShellMat);
+      upperArm.position.set(0, 0.52, 0);
+      upperArm.castShadow = true;
+      cobotShoulderGroup.add(upperArm);
+
+      // Codo Eje 3
+      cobotElbowGroup = new THREE.Group();
+      cobotElbowGroup.position.set(0, 1.05, 0);
+      cobotShoulderGroup.add(cobotElbowGroup);
+
+      const elbowJoint = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.3, 20), cobaltMat);
+      elbowJoint.rotation.x = Math.PI / 2;
+      cobotElbowGroup.add(elbowJoint);
+
+      const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.1, 0.92, 20), whiteShellMat);
+      forearm.position.set(0, 0.46, 0);
+      forearm.castShadow = true;
+      cobotElbowGroup.add(forearm);
+
+      // Muñeca + Pinza Paralela Animada
+      const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.14, 16), darkSteelMat);
+      wrist.position.set(0, 0.96, 0);
+      cobotElbowGroup.add(wrist);
+
+      const fingerGeo = new THREE.BoxGeometry(0.03, 0.18, 0.06);
+      gripperLeft = new THREE.Mesh(fingerGeo, silverAlumMat);
+      gripperLeft.position.set(-0.06, 1.1, 0);
+      cobotElbowGroup.add(gripperLeft);
+
+      gripperRight = new THREE.Mesh(fingerGeo, silverAlumMat);
+      gripperRight.position.set(0.06, 1.1, 0);
+      cobotElbowGroup.add(gripperRight);
+
+      // -----------------------------------------------------------------------
+      // D. ARMARIO ELÉCTRICO EDGE AI / PLC + BALIZA LUMINOSA SUPERIOR
+      // -----------------------------------------------------------------------
+      const cabinetGroup = new THREE.Group();
+      cabinetGroup.position.set(-2.55, 0, -1.35);
+      scene.add(cabinetGroup);
+
+      const cabBody = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.85, 0.65), whiteShellMat);
+      cabBody.position.y = 0.925;
+      cabBody.castShadow = true;
+      cabinetGroup.add(cabBody);
+
+      const cabTrim = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.1, 0.68), darkSteelMat);
+      cabTrim.position.y = 1.85;
+      cabinetGroup.add(cabTrim);
+
+      // Pantalla HMI integrada en puerta del armario
+      const hmiScreen = new THREE.Mesh(
+        new THREE.BoxGeometry(0.46, 0.34, 0.03),
+        new THREE.MeshBasicMaterial({ color: 0x0F172A })
+      );
+      hmiScreen.position.set(0, 1.28, 0.33);
+      cabinetGroup.add(hmiScreen);
+
+      const hmiGlow = new THREE.Mesh(
+        new THREE.BoxGeometry(0.40, 0.28, 0.035),
+        new THREE.MeshBasicMaterial({ color: 0x1D4ED8 })
+      );
+      hmiGlow.position.set(0, 1.28, 0.332);
+      cabinetGroup.add(hmiGlow);
+
+      // Baliza luminosa industrial de 3 niveles (Verde, Ámbar, Rojo)
+      const beaconPole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.25, 12), darkSteelMat);
+      beaconPole.position.set(0.28, 2.0, 0);
+      cabinetGroup.add(beaconPole);
+
+      stackLightGreen = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.065, 0.065, 0.11, 16),
+        new THREE.MeshBasicMaterial({ color: 0x10B981 })
+      );
+      stackLightGreen.position.set(0.28, 2.18, 0);
+      cabinetGroup.add(stackLightGreen);
+
+      stackLightAmber = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.065, 0.065, 0.11, 16),
+        new THREE.MeshBasicMaterial({ color: 0x64748B })
+      );
+      stackLightAmber.position.set(0.28, 2.30, 0);
+      cabinetGroup.add(stackLightAmber);
+
+      stackLightRed = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.065, 0.065, 0.11, 16),
+        new THREE.MeshBasicMaterial({ color: 0x64748B })
+      );
+      stackLightRed.position.set(0.28, 2.42, 0);
+      cabinetGroup.add(stackLightRed);
+
+      // Controles de Órbita con Ratón y Táctil
+      setupOrbitInteractions(canvas);
+
+      threeInitialized = true;
+    }
+
+    function setupOrbitInteractions(canvas) {
+      canvas.addEventListener('mousedown', (e) => {
+        camOrbit.isDragging = true;
+        camOrbit.prevX = e.clientX;
+        camOrbit.prevY = e.clientY;
+      });
+      window.addEventListener('mouseup', () => {
+        camOrbit.isDragging = false;
+      });
+      window.addEventListener('mousemove', (e) => {
+        if (!camOrbit.isDragging) return;
+        const dx = e.clientX - camOrbit.prevX;
+        const dy = e.clientY - camOrbit.prevY;
+        camOrbit.prevX = e.clientX;
+        camOrbit.prevY = e.clientY;
+        camOrbit.theta -= dx * 0.008;
+        camOrbit.phi = Math.max(0.28, Math.min(1.42, camOrbit.phi - dy * 0.008));
+        updateCameraPosition();
+      });
+
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        camOrbit.radius = Math.max(4.8, Math.min(15.5, camOrbit.radius + e.deltaY * 0.006));
+        updateCameraPosition();
+      }, { passive: false });
+
+      // Soporte táctil para dispositivos móviles y tablets
+      canvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          camOrbit.isDragging = true;
+          camOrbit.prevX = e.touches[0].clientX;
+          camOrbit.prevY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+
+      canvas.addEventListener('touchmove', (e) => {
+        if (!camOrbit.isDragging || e.touches.length !== 1) return;
+        const dx = e.touches[0].clientX - camOrbit.prevX;
+        const dy = e.touches[0].clientY - camOrbit.prevY;
+        camOrbit.prevX = e.touches[0].clientX;
+        camOrbit.prevY = e.touches[0].clientY;
+        camOrbit.theta -= dx * 0.009;
+        camOrbit.phi = Math.max(0.28, Math.min(1.42, camOrbit.phi - dy * 0.009));
+        updateCameraPosition();
+      }, { passive: true });
+
+      canvas.addEventListener('touchend', () => {
+        camOrbit.isDragging = false;
+      });
+    }
+
+    function updateCameraPosition() {
+      if (!camera) return;
+      const { theta, phi, radius, target } = camOrbit;
+      camera.position.x = target.x + radius * Math.sin(phi) * Math.sin(theta);
+      camera.position.y = target.y + radius * Math.cos(phi);
+      camera.position.z = target.z + radius * Math.sin(phi) * Math.cos(theta);
+      camera.lookAt(target.x, target.y, target.z);
+    }
+
+    function setCameraPreset(preset) {
+      const presets = {
+        iso:    { theta: 0.65, phi: 0.92, radius: 9.2, target: { x: 0, y: 1.1, z: 0 } },
+        vision: { theta: 0.12, phi: 1.05, radius: 5.4, target: { x: -1.1, y: 1.5, z: 0 } },
+        cobot:  { theta: 0.85, phi: 0.98, radius: 5.8, target: { x: 1.1, y: 1.3, z: -0.7 } },
+        plc:    { theta: -0.35, phi: 1.05, radius: 5.6, target: { x: -2.4, y: 1.3, z: -1.1 } }
+      };
+      const p = presets[preset] || presets.iso;
+      camOrbit.theta = p.theta;
+      camOrbit.phi = p.phi;
+      camOrbit.radius = p.radius;
+      camOrbit.target = { ...p.target };
+      updateCameraPosition();
+
+      ['iso', 'vision', 'cobot', 'plc'].forEach(k => {
+        const b = document.getElementById(`camBtn-${k}`);
+        if (b) {
+          b.className = k === preset
+            ? 'cam-preset-btn px-2.5 py-1 rounded-lg text-[11px] font-bold bg-cobalt text-white transition-all cursor-pointer'
+            : 'cam-preset-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white border border-slate-200 text-muted hover:text-ink transition-all cursor-pointer';
+        }
+      });
+    }
+
+    function resizeThreeRenderer() {
+      if (!threeInitialized || !renderer || !camera) return;
+      const wrapper = document.getElementById('threeCanvasWrapper');
+      if (!wrapper) return;
+      const w = wrapper.clientWidth;
+      const h = wrapper.clientHeight;
+      if (w > 0 && h > 0) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      }
+    }
+
+    window.addEventListener('resize', resizeThreeRenderer);
+
+    // Bucle de Animación 3D
+    let clockTime = 0;
+    function animateThreeLoop() {
+      requestAnimationFrame(animateThreeLoop);
+      if (!threeInitialized || !renderer || !scene || !camera) return;
+
+      clockTime += 0.016;
+      const effectiveSpeed = twinState.anomaly ? 0.06 : twinState.speedFactor;
+
+      // 1. Movimiento de rodillos y piezas en la cinta
+      conveyorRollers.forEach(r => {
+        r.rotation.z -= 0.05 * effectiveSpeed;
+      });
+
+      workpieces.forEach(wp => {
+        wp.position.x += 0.022 * effectiveSpeed;
+        if (wp.position.x > 3.1) {
+          wp.position.x = -3.1;
+        }
+      });
+
+      // 2. Cinemática articulada del Cobot 6 Ejes
+      if (twinState.anomaly) {
+        // Vibración de alerta en el brazo robótico
+        cobotBaseGroup.rotation.y = Math.sin(clockTime * 38) * 0.03;
+        cobotShoulderGroup.rotation.z = 0.35;
+        cobotElbowGroup.rotation.z = -0.85;
+      } else {
+        const wave = Math.sin(clockTime * 1.9 * effectiveSpeed);
+        cobotBaseGroup.rotation.y = wave * 0.65;
+        cobotShoulderGroup.rotation.z = 0.28 + Math.cos(clockTime * 1.9 * effectiveSpeed) * 0.22;
+        cobotElbowGroup.rotation.z = -0.75 - Math.sin(clockTime * 1.9 * effectiveSpeed) * 0.25;
+        const pinch = 0.045 + Math.abs(Math.sin(clockTime * 1.9 * effectiveSpeed)) * 0.04;
+        gripperLeft.position.x = -pinch;
+        gripperRight.position.x = pinch;
+      }
+
+      // 3. Pulso del cono de Visión IA y Baliza Luminosa
+      if (visionConeMesh) {
+        visionConeMesh.material.opacity = 0.18 + Math.sin(clockTime * 4) * 0.07;
+        visionConeMesh.material.color.setHex(twinState.anomaly ? 0xDC2626 : 0x0D9488);
+      }
+
+      if (stackLightGreen && stackLightAmber && stackLightRed) {
+        if (twinState.anomaly) {
+          stackLightGreen.material.color.setHex(0x64748B);
+          stackLightAmber.material.color.setHex(0x64748B);
+          const flash = Math.sin(clockTime * 10) > 0;
+          stackLightRed.material.color.setHex(flash ? 0xEF4444 : 0x7F1D1D);
+        } else if (twinState.oee < 94) {
+          stackLightGreen.material.color.setHex(0x64748B);
+          stackLightAmber.material.color.setHex(0xF59E0B);
+          stackLightRed.material.color.setHex(0x64748B);
+        } else {
+          stackLightGreen.material.color.setHex(0x10B981);
+          stackLightAmber.material.color.setHex(0x64748B);
+          stackLightRed.material.color.setHex(0x64748B);
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // Controles e Interacciones del Simulador 3D
+    function logTelemetry(type, message) {
+      const box = document.getElementById('telemetryConsole');
+      if (!box) return;
+      const now = new Date().toTimeString().split(' ')[0];
+      const colors = {
+        ok: 'text-emerald-400',
+        ai: 'text-sky-400',
+        warn: 'text-amber-400',
+        err: 'text-rose-400'
+      };
+      const row = document.createElement('div');
+      row.className = colors[type] || 'text-slate-300';
+      row.innerHTML = `<span class="text-slate-500">${now}</span> <strong>[${type.toUpperCase()}]</strong> ${message}`;
+      box.appendChild(row);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function clearTelemetryLogs() {
+      document.getElementById('telemetryConsole').innerHTML = '';
+      logTelemetry('ai', 'Buffer de consola Edge AI reiniciado.');
+    }
+
+    function selectScenario3D(scenKey) {
+      const sc = SCENARIOS_3D[scenKey];
+      if (!sc) return;
+      twinState.scenario = scenKey;
+      twinState.anomaly = false;
+      twinState.repairStep = 0;
+      twinState.oee = 99.2;
+      twinState.speedFactor = sc.nomSpeed / 100;
+      twinState.confidence = sc.nomConf;
+      twinState.vibSens = sc.nomVib;
+
+      document.getElementById('rngSpeed3D').value = sc.nomSpeed;
+      document.getElementById('rngConf3D').value = sc.nomConf;
+      document.getElementById('rngVib3D').value = sc.nomVib;
+
+      ['vision', 'predictive', 'cycle'].forEach(k => {
+        const card = document.getElementById(`scenCard-${k}`);
+        if (card) {
+          card.className = k === scenKey
+            ? 'scen-card w-full p-3 rounded-xl border-2 border-cobalt bg-cobaltTint/60 text-left transition-all cursor-pointer'
+            : 'scen-card w-full p-3 rounded-xl border border-borderLight bg-porcelain hover:bg-slate-100/70 text-left transition-all cursor-pointer';
+        }
+      });
+
+      syncSimulatorHUD();
+      logTelemetry('ai', `Escenario activo: "${sc.name}". Gemelo 3D sincronizado.`);
+    }
+
+    function onSlider3DChange() {
+      const spd = parseInt(document.getElementById('rngSpeed3D').value, 10);
+      const conf = parseInt(document.getElementById('rngConf3D').value, 10);
+      const vib = parseFloat(document.getElementById('rngVib3D').value);
+
+      twinState.speedFactor = spd / 100;
+      twinState.confidence = conf;
+      twinState.vibSens = vib;
+
+      if (!twinState.anomaly) {
+        if (conf < 76 || spd < 45 || vib > 8.5) {
+          twinState.oee = 84.5;
+        } else if (conf < 86 || spd > 140) {
+          twinState.oee = 92.4;
+        } else {
+          twinState.oee = 99.2;
+        }
+      }
+      syncSimulatorHUD();
+    }
+
+    function injectPlantAnomaly() {
+      const sc = SCENARIOS_3D[twinState.scenario];
+      twinState.anomaly = true;
+      twinState.repairStep = 1;
+      twinState.oee = 67.4;
+      twinState.confidence = 58;
+      twinState.vibSens = 9.5;
+
+      document.getElementById('rngConf3D').value = 58;
+      document.getElementById('rngVib3D').value = 9.5;
+
+      syncSimulatorHUD();
+      logTelemetry('err', `${sc.faultCode}: ${sc.faultMsg} OEE cae al 67,4%.`);
+    }
+
+    function executeRepairStep(stepNum) {
+      if (!twinState.anomaly || twinState.repairStep !== stepNum) return;
+      const sc = SCENARIOS_3D[twinState.scenario];
+
+      if (stepNum === 1) {
+        twinState.repairStep = 2;
+        twinState.oee = 78.0;
+        logTelemetry('ai', `Paso 01: Auditoría de tensores CNN y espectro vibración FFT completada (${sc.faultCode}).`);
+      } else if (stepNum === 2) {
+        twinState.repairStep = 3;
+        twinState.confidence = sc.nomConf;
+        twinState.vibSens = sc.nomVib;
+        document.getElementById('rngConf3D').value = sc.nomConf;
+        document.getElementById('rngVib3D').value = sc.nomVib;
+        twinState.oee = 90.6;
+        logTelemetry('ai', `Paso 02: Pesos de inferencia IA (${sc.nomConf}%) y parámetros dinámicos recalibrados.`);
+      } else if (stepNum === 3) {
+        twinState.anomaly = false;
+        twinState.repairStep = 0;
+        twinState.oee = 99.2;
+        logTelemetry('ok', 'Paso 03: Célula 3D rearmada en modo automático. OEE restaurado al 99,2%.');
+      }
+
+      syncSimulatorHUD();
+    }
+
+    function syncSimulatorHUD() {
+      const spdPct = Math.round(twinState.speedFactor * 100);
+      const mmSec = Math.round(850 * twinState.speedFactor);
+      const pzsMin = twinState.anomaly ? 0 : Math.round(42 * twinState.speedFactor);
+
+      document.getElementById('lblSpeed3D').textContent = `${spdPct}% (${mmSec} mm/s)`;
+      document.getElementById('lblConf3D').textContent = `${twinState.confidence}%`;
+      document.getElementById('lblVib3D').textContent = `${twinState.vibSens.toFixed(1)} / 10`;
+      document.getElementById('hudCycleRate').textContent = `${pzsMin} pzs/min`;
+
+      const oeeVal = document.getElementById('simOeeValue');
+      const oeeDot = document.getElementById('simOeeDot');
+      const hudStatus = document.getElementById('hudCellStatus');
+      oeeVal.textContent = `${twinState.oee.toFixed(1).replace('.', ',')}%`;
+
+      if (twinState.anomaly) {
+        oeeVal.className = 'font-mono text-sm font-bold text-red-600';
+        oeeDot.className = 'w-2.5 h-2.5 rounded-full bg-red-600 animate-ping';
+        hudStatus.className = 'font-bold text-red-600';
+        hudStatus.textContent = '● ANOMALÍA DETECTADA';
+      } else if (twinState.oee < 95) {
+        oeeVal.className = 'font-mono text-sm font-bold text-amberAlert';
+        oeeDot.className = 'w-2.5 h-2.5 rounded-full bg-amberAlert';
+        hudStatus.className = 'font-bold text-amberAlert';
+        hudStatus.textContent = '● AJUSTE SUBÓPTIMO';
+      } else {
+        oeeVal.className = 'font-mono text-sm font-bold text-tealMetric';
+        oeeDot.className = 'w-2.5 h-2.5 rounded-full bg-tealMetric';
+        hudStatus.className = 'font-bold text-tealMetric';
+        hudStatus.textContent = '● OPERACIÓN NOMINAL';
+      }
+
+      const alertBanner = document.getElementById('simAlertBanner');
+      const diagBadge = document.getElementById('diagBadge3D');
+      const sc = SCENARIOS_3D[twinState.scenario];
+
+      if (twinState.anomaly) {
+        alertBanner.classList.remove('hidden');
+        document.getElementById('simAlertCode').textContent = sc.faultCode;
+        document.getElementById('simAlertMsg').textContent = sc.faultMsg;
+        diagBadge.textContent = `Paso 0${twinState.repairStep} / 03`;
+        diagBadge.className = 'text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-red-100 text-red-700';
+      } else {
+        alertBanner.classList.add('hidden');
+        diagBadge.textContent = 'Sin incidencias';
+        diagBadge.className = 'text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-md bg-tealTint text-tealMetric';
+      }
+
+      [1, 2, 3].forEach(n => {
+        const btn = document.getElementById(`step3d-${n}`);
+        if (twinState.anomaly && twinState.repairStep === n) {
+          btn.disabled = false;
+          btn.className = 'p-3 rounded-xl border-2 border-cobalt bg-cobaltTint text-left cursor-pointer shadow-xs transition-all';
+        } else {
+          btn.disabled = true;
+          btn.className = 'p-3 rounded-xl border border-slate-200 bg-slate-50 text-left opacity-45 cursor-not-allowed transition-all';
+        }
+      });
+    }
+
+    // =========================================================================
+    // 8. INTERFAZ 5: CALCULADORA FINANCIERA Y DE IMPACTO (3 PERFILES)
+    // =========================================================================
+    function formatEuro(val) {
+      return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
+    }
+
+    function updateB2BCalc() {
+      const workers = parseInt(document.getElementById('inB2bWorkers').value, 10);
+      const fundaePct = parseFloat(document.getElementById('inB2bTier').value);
+      const hours = parseInt(document.getElementById('inB2bHours').value, 10);
+      const useEu = document.getElementById('inB2bEu').checked;
+
+      const gross = workers * hours * 13;
+      const fundae = Math.round(gross * fundaePct);
+      const eu = useEu ? Math.round((gross - fundae) * 0.50) : 0;
+      const net = Math.max(0, gross - fundae - eu);
+      const savings = Math.round(workers * 2700 * (hours / 60));
+      const roi = (savings / (net > 0 ? net : gross)).toFixed(1).replace('.', ',');
+
+      document.getElementById('b2bOutWorkers').textContent = `${workers} ${workers === 1 ? 'técnico' : 'técnicos'}`;
+      document.getElementById('b2bOutHours').textContent = `${hours} horas`;
+      document.getElementById('b2bResGross').textContent = formatEuro(gross);
+      document.getElementById('b2bResFundae').textContent = `-${formatEuro(fundae)}`;
+      document.getElementById('b2bResEu').textContent = `-${formatEuro(eu)}`;
+      document.getElementById('b2bResNet').textContent = formatEuro(net);
+      document.getElementById('b2bResRoiBadge').textContent = `ROI: ${roi}x`;
+
+      document.getElementById('b2bBarNetLbl').textContent = formatEuro(net);
+      document.getElementById('b2bBarSavLbl').textContent = `+${formatEuro(savings)}`;
+      const netPctBar = Math.max(4, Math.min(100, Math.round((net / Math.max(1, savings)) * 100)));
+      document.getElementById('b2bBarNet').style.width = `${netPctBar}%`;
+
+      if (activeSegment === 'b2b') {
+        currentCalcSummary = `Estudio B2B FUNDAE: ${workers} técnicos, ${hours}h | Coste Neto: ${formatEuro(net)} | Ahorro OEE estimado: +${formatEuro(savings)}/año (ROI ${roi}x).`;
+      }
+    }
+
+    let b2cPlanMode = 'monthly';
+    function setB2CMode(mode) {
+      b2cPlanMode = mode;
+      document.getElementById('b2cOpt-monthly').className = mode === 'monthly'
+        ? 'p-3 rounded-xl border-2 border-cobalt bg-cobaltTint/50 text-left cursor-pointer'
+        : 'p-3 rounded-xl border border-borderLight bg-porcelain text-left cursor-pointer';
+      document.getElementById('b2cOpt-bootcamp').className = mode === 'bootcamp'
+        ? 'p-3 rounded-xl border-2 border-tealMetric bg-tealTint/50 text-left cursor-pointer'
+        : 'p-3 rounded-xl border border-borderLight bg-porcelain text-left cursor-pointer';
+      updateB2CCalc();
+    }
+
+    function updateB2CCalc() {
+      const boost = parseInt(document.getElementById('inB2cRole').value, 10);
+      const hrsWeek = parseInt(document.getElementById('inB2cHours').value, 10);
+      const estMonths = Math.max(2, Math.ceil(120 / (hrsWeek * 4)));
+      const cost = b2cPlanMode === 'monthly' ? estMonths * 59 : 490;
+      const payback = (cost / (boost / 12)).toFixed(1).replace('.', ',');
+
+      document.getElementById('b2cOutHours').textContent = `${hrsWeek} h / semana`;
+      document.getElementById('b2cResCost').textContent = formatEuro(cost);
+      document.getElementById('b2cResNote').textContent = b2cPlanMode === 'monthly' ? `${estMonths} meses a ${hrsWeek}h/sem` : 'Pago único certificado';
+      document.getElementById('b2cResBoost').textContent = `+${formatEuro(boost)} / año`;
+      document.getElementById('b2cResPayback').textContent = `${payback} meses`;
+
+      document.getElementById('b2cBarCostLbl').textContent = formatEuro(cost);
+      document.getElementById('b2cBarBoostLbl').textContent = `+${formatEuro(boost)}`;
+      const costPctBar = Math.max(4, Math.min(100, Math.round((cost / boost) * 100)));
+      document.getElementById('b2cBarCost').style.width = `${costPctBar}%`;
+
+      if (activeSegment === 'b2c') {
+        currentCalcSummary = `Plan Carrera B2C (${b2cPlanMode === 'monthly' ? 'Suscripción Pro' : 'Certificación 4M'}): Inversión ${formatEuro(cost)} | Mejora salarial estimada: +${formatEuro(boost)}/año.`;
+      }
+    }
+
+    function updateEduCalc() {
+      const students = parseInt(document.getElementById('inEduStudents').value, 10);
+      const stations = parseInt(document.getElementById('inEduStations').value, 10);
+      const unitHw = parseInt(document.getElementById('inEduEquip').value, 10);
+
+      const physTotal = stations * unitHw;
+      const cloudAnnual = 3600 + students * 90;
+      const savings = Math.max(0, physTotal - cloudAnnual);
+      const savPct = ((savings / physTotal) * 100).toFixed(1).replace('.', ',');
+      const perStudent = Math.round(cloudAnnual / students);
+
+      document.getElementById('eduOutStudents').textContent = `${students} alumnos`;
+      document.getElementById('eduOutStations').textContent = `${stations} puestos`;
+      document.getElementById('eduResPhysical').textContent = formatEuro(physTotal);
+      document.getElementById('eduResCloud').textContent = `${formatEuro(cloudAnnual)} / año`;
+      document.getElementById('eduResPerStudent').textContent = `${perStudent} € / alumno al año`;
+      document.getElementById('eduResSavings').textContent = formatEuro(savings);
+      document.getElementById('eduResPct').textContent = `Ahorro del ${savPct}%`;
+
+      document.getElementById('eduBarPhysLbl').textContent = formatEuro(physTotal);
+      document.getElementById('eduBarCloudLbl').textContent = formatEuro(cloudAnnual);
+      const cloudPctBar = Math.max(3, Math.min(100, Math.round((cloudAnnual / physTotal) * 100)));
+      document.getElementById('eduBarCloud').style.width = `${cloudPctBar}%`;
+
+      if (activeSegment === 'edu') {
+        currentCalcSummary = `Propuesta Centro FP/Universidad: ${students} alumnos, ${stations} puestos virtuales 3D | Ahorro CapEx: ${formatEuro(savings)} (${savPct}%).`;
+      }
+    }
+
+    // =========================================================================
+    // 9. MODAL CONTEXTUAL DE SOLICITUD / ACCESO
+    // =========================================================================
+    function openContextualModal(prefillNote = '') {
+      const data = SEGMENTS_DATA[activeSegment];
+      document.getElementById('ctxModalBadge').textContent = data.modalBadge;
+      document.getElementById('ctxModalTitle').textContent = data.modalTitle;
+      document.getElementById('ctxOrgLabel').textContent = data.modalOrgLabel;
+      document.getElementById('ctxOrg').placeholder = data.modalOrgPlaceholder;
+
+      if (prefillNote) {
+        document.getElementById('ctxNotes').value = prefillNote;
+      }
+
+      document.getElementById('ctxLeadForm').classList.remove('hidden');
+      document.getElementById('ctxSuccessView').classList.add('hidden');
+      document.getElementById('ctxFormErr').classList.add('hidden');
+
+      const modal = document.getElementById('contextualModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function openModalWithCalculation() {
+      if (activeSegment === 'b2b') updateB2BCalc();
+      if (activeSegment === 'b2c') updateB2CCalc();
+      if (activeSegment === 'edu') updateEduCalc();
+      openContextualModal(currentCalcSummary);
+    }
+
+    function closeContextualModal() {
+      const modal = document.getElementById('contextualModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function submitContextualForm(e) {
+      e.preventDefault();
+      const name = document.getElementById('ctxName').value.trim();
+      const org = document.getElementById('ctxOrg').value.trim();
+      const email = document.getElementById('ctxEmail').value.trim();
+      const err = document.getElementById('ctxFormErr');
+
+      if (!name || !org || !email || !email.includes('@')) {
+        err.textContent = 'Por favor, rellena todos los campos obligatorios con un correo válido.';
+        err.classList.remove('hidden');
+        return;
+      }
+
+      err.classList.add('hidden');
+      const code = Math.floor(1000 + Math.random() * 9000);
+      document.getElementById('ctxRefCode').textContent = `REF #KNT-${code}`;
+      document.getElementById('ctxLeadForm').classList.add('hidden');
+      document.getElementById('ctxSuccessView').classList.remove('hidden');
+    }
+
+    // Cierre de modales con Escape o clic fuera
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeCourseDrawer();
+        closeContextualModal();
+      }
+    });
+
+    document.getElementById('courseDrawerBackdrop').addEventListener('click', (e) => {
+      if (e.target.id === 'courseDrawerBackdrop') closeCourseDrawer();
+    });
+    document.getElementById('contextualModal').addEventListener('click', (e) => {
+      if (e.target.id === 'contextualModal') closeContextualModal();
+    });
+
+    // =========================================================================
+    // 10. INICIALIZACIÓN AL CARGAR LA VENTANA (WINDOW.ONLOAD)
+    // =========================================================================
+    window.onload = function () {
+      updateB2BCalc();
+      updateB2CCalc();
+      updateEduCalc();
+      setSegment('b2b');
+      navigateTo('inicio');
+
+      initThreeDigitalTwin();
+      animateThreeLoop();
+      logTelemetry('ok', 'Gemelo Digital 3D KINETIA inicializado (OEE 99,2%).');
+      logTelemetry('ai', 'Cámara CNN Vision + Cobot 6 Ejes + Edge PLC en línea.');
+    };
+  </script>
+</body>
+</html>
